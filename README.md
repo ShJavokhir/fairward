@@ -1,37 +1,29 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Fairward
 
-## Getting Started
+**Your AI Healthcare Advocate**
 
-First, run the development server:
+## The Problem
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Healthcare pricing in America is broken by design. The same MRI costs $400 at one hospital and $4,000 at another 20 miles away. 80% of medical bills contain errors. The average large hospital bill has $1,300 in overcharges.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+You can't comparison shop because prices are hidden. You can't fight your bill because you don't know what's fair. Hospitals and insurers win by keeping you in the dark.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## What Changed
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Since 2021, federal law requires every hospital and insurer to publish their prices online. But they've made the data deliberately unusable—buried links, broken files, incompatible formats. The information is technically public but practically inaccessible. Fairward fixes that.
 
-## Learn More
+## What Fairward Does
 
-To learn more about Next.js, take a look at the following resources:
+**Before care:** Search any procedure. See what every hospital actually charges your insurance. Know when you're being quoted 3x the fair price.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+**Before you commit:** Fairward contacts providers on your behalf to confirm prices in writing, request cash-pay alternatives, and find cheaper options nearby.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**After care:** Upload your bill. Fairward detects errors, identifies overcharges, and calls the billing department to negotiate on your behalf. We apply for financial assistance programs you didn't know existed.
 
-## Deploy on Vercel
+## Why It Works
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Every bill we fight teaches us which hospitals negotiate, which insurers approve appeals, and what tactics work. This intelligence compounds over time into an advantage no one else has.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-# fairward
+When 74% of people who challenge a medical bill get it reduced or corrected, the problem isn't that bills can't be fought—it's that most people don't have the time, knowledge, or energy to fight.
+
+Medical bills are the #1 cause of bankruptcy in America. We're changing that. *Fairward fights for you.*

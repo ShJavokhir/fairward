@@ -2,6 +2,7 @@
 
 import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense, useState, useEffect, useMemo } from "react";
+import { ChatPanel } from "@/components/ChatPanel";
 
 // ============================================================================
 // TypeScript Interfaces matching the actual API response
@@ -299,6 +300,45 @@ function ResultsContent() {
     max: Math.max(...providers.map(p => p.totalCost)),
     avg: providers.reduce((sum, p) => sum + p.totalCost, 0) / providers.length
   } : null;
+
+  // Generate context for chat
+  const chatContext = useMemo(() => {
+    if (!apiResponse) return "";
+
+    const data = apiResponse.data;
+    const providerSummaries = providers.map((p, i) => {
+      const breakdown = p.breakdown.map(b => {
+        const subStep = clusterToSubStep.get(b.cluster_id);
+        return `  - ${subStep?.service_description || b.cluster_id}: $${b.cost} (${b.price_type})`;
+      }).join("\n");
+
+      return `${i + 1}. ${p.name}
+   Address: ${cleanAddress(p.address)}
+   Total Cost: $${p.totalCost}
+   Coverage: ${p.coverage.score}% (${p.coverage.matched_items}/${p.coverage.total_items} items)
+   Cost Breakdown:
+${breakdown}`;
+    }).join("\n\n");
+
+    const stepsInfo = mainSteps.map(s => `${s.step_number}. ${s.description}`).join("\n");
+
+    return `PROCEDURE: ${formatProcedureName(data.procedure)}
+LOCATION: ${formatProcedureName(data.metro.replace(/_/g, " "))}
+PRICE TYPE: ${data.price_type}
+
+PROCEDURE STEPS:
+${stepsInfo}
+
+PRICE RANGE:
+- Lowest: $${priceRange?.min || 0}
+- Average: $${Math.round(priceRange?.avg || 0)}
+- Highest: $${priceRange?.max || 0}
+- Potential Savings: $${(priceRange?.max || 0) - (priceRange?.min || 0)}
+
+PROVIDERS (${providers.length} total):
+
+${providerSummaries}`;
+  }, [apiResponse, providers, mainSteps, priceRange, clusterToSubStep]);
 
   // Group breakdown items by main step
   const getGroupedBreakdown = (breakdown: BreakdownItem[]) => {
@@ -642,7 +682,8 @@ function ResultsContent() {
               })}
             </div>
 
-          
+            {/* Chat Panel */}
+            <ChatPanel context={chatContext} />
           </>
         )}
 

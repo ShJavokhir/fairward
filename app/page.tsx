@@ -299,7 +299,7 @@ function SemanticSearchInput({
   };
 
   return (
-    <div ref={containerRef} className="relative z-20">
+    <div ref={containerRef} className="relative z-50">
       {/* Input Field */}
       <div className={`relative transition-all duration-300 ${isOpen ? "ring-2 ring-[#2DD4BF] ring-offset-2 rounded-2xl" : ""}`}>
         <div className="absolute left-6 top-1/2 -translate-y-1/2 pointer-events-none">
@@ -479,28 +479,28 @@ function SelectedProcedureCard({
   const availableMetros = procedure.metroAvailability.filter((m) => m.available);
 
   return (
-    <div className="mt-8 p-6 bg-white rounded-2xl border-2 border-[#2DD4BF]/20 shadow-md animate-scale-in">
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <span className="badge badge-accent mb-2">Selected</span>
-          <h3 className="font-display text-xl text-[#0F2E2E]">{procedure.name}</h3>
-          <p className="text-sm text-[#5F7A7A] mt-1 capitalize">{procedure.category}</p>
-        </div>
-        <button
-          onClick={onClear}
-          className="p-2 hover:bg-[#E8F5F0] rounded-xl transition-colors"
-          aria-label="Clear selection"
-        >
-          <svg className="w-5 h-5 text-[#5F7A7A]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
+    <div className="mt-8 p-6 bg-white rounded-2xl border-2 border-[#2DD4BF]/20 shadow-md animate-scale-in text-center relative">
+      {/* Close button */}
+      <button
+        onClick={onClear}
+        className="absolute top-4 right-4 p-2 hover:bg-[#E8F5F0] rounded-xl transition-colors"
+        aria-label="Clear selection"
+      >
+        <svg className="w-5 h-5 text-[#5F7A7A]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+
+      {/* Procedure info */}
+      <div className="mb-6">
+        <h3 className="font-display text-2xl text-[#0F2E2E] mb-1">{procedure.name}</h3>
+        <p className="text-sm text-[#5F7A7A] capitalize">{procedure.category}</p>
       </div>
 
+      {/* Keywords */}
       {procedure.keywords.length > 0 && (
         <div className="mb-6">
-          <p className="text-xs text-[#5F7A7A] mb-2">Related terms</p>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap justify-center gap-2">
             {procedure.keywords.slice(0, 4).map((keyword) => (
               <span key={keyword} className="px-3 py-1.5 bg-[#F2FAF7] text-[#0A4D4D] text-xs rounded-full font-medium">
                 {keyword}
@@ -510,7 +510,8 @@ function SelectedProcedureCard({
         </div>
       )}
 
-      <div>
+      {/* Location selection */}
+      <div className="pt-4 border-t border-[#0F2E2E]/5">
         <p className="text-xs text-[#5F7A7A] mb-3">Select location to view prices</p>
         {availableMetros.length === 0 ? (
           <p className="text-sm text-[#5F7A7A] italic">Not available in any location yet</p>
@@ -685,7 +686,7 @@ export default function Home() {
           </div>
 
           {/* Trust indicators */}
-          <div className="mt-10 flex flex-wrap justify-center gap-6 animate-fade-in-up animation-delay-400">
+          <div className="relative z-0 mt-10 flex flex-wrap justify-center gap-6 animate-fade-in-up animation-delay-400">
             {[
               { icon: "M5 13l4 4L19 7", text: "Free to search" },
               { icon: "M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z", text: "No account required" },

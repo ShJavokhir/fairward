@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "ingest": "npx tsx --env-file=.env.local scripts/ingest-procedures.ts"
+    "ingest": "bun run --env-file=.env.local scripts/ingest-procedures.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.9",

@@ -16,10 +16,12 @@
     "@vapi-ai/server-sdk": "^0.11.0",
     "@vapi-ai/web": "^2.5.2",
     "ai": "^6.0.27",
+    "mapbox-gl": "^3.17.0",
     "mongodb": "^7.0.0",
     "next": "16.1.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "react-map-gl": "^8.1.0",
     "voyageai": "^0.1.0"
   },
   "devDependencies": {

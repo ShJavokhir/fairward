@@ -5,6 +5,19 @@ import { Suspense, useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import OutreachModal from "@/components/OutreachModal";
 import { ChatPanel } from "@/components/ChatPanel";
+import dynamic from "next/dynamic";
+
+const ProvidersMap = dynamic(() => import("@/components/ProvidersMap"), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-80 bg-[#F5F5F3] rounded-2xl flex items-center justify-center">
+      <div className="flex flex-col items-center gap-3">
+        <div className="w-6 h-6 border-2 border-[#1a1a1a] border-t-transparent rounded-full animate-spin" />
+        <p className="text-sm text-[#1a1a1a]/50">Loading map...</p>
+      </div>
+    </div>
+  ),
+});
 
 // ============================================================================
 // TypeScript Interfaces
@@ -307,7 +320,7 @@ ${providerSummaries}`;
   return (
     <div className="min-h-screen bg-[#FAFAF8]">
       {/* Navigation */}
-      <nav className="border-b border-[#1a1a1a]/5 sticky top-0 bg-[#FAFAF8]/90 backdrop-blur-md z-40">
+      <nav className="border-b border-[#1a1a1a]/5 bg-[#FAFAF8]">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 group">
             <div className="w-9 h-9 bg-[#1a1a1a] rounded-full flex items-center justify-center group-hover:scale-95 transition-transform">
@@ -331,7 +344,7 @@ ${providerSummaries}`;
       </nav>
 
       {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-6 py-8 md:py-12">
+      <main className="max-w-7xl mx-auto px-6 py-8 md:py-12">
         {/* Loading State */}
         {isLoading && (
           <div className="py-24 text-center">
@@ -401,70 +414,74 @@ ${providerSummaries}`;
               </div>
             )}
 
-            {/* Procedure Steps Toggle */}
-            {mainSteps.length > 0 && (
-              <div className="mb-8">
-                <button
-                  onClick={() => setShowSteps(!showSteps)}
-                  className="flex items-center gap-2 text-sm text-[#1a1a1a]/60 hover:text-[#1a1a1a] transition-colors"
-                >
-                  <svg
-                    className={`w-4 h-4 transition-transform ${showSteps ? "rotate-180" : ""}`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                  {showSteps ? "Hide" : "Show"} procedure steps ({mainSteps.length})
-                </button>
-
-                {showSteps && (
-                  <div className="mt-4 space-y-2">
-                    {mainSteps.map((step) => (
-                      <div
-                        key={step.step_number}
-                        className="flex items-start gap-3 p-4 bg-white rounded-xl border border-[#1a1a1a]/5"
+            {/* Two Column Layout: Providers Left, Map Right */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Left Column: Provider List */}
+              <div>
+                {/* Procedure Steps Toggle */}
+                {mainSteps.length > 0 && (
+                  <div className="mb-6">
+                    <button
+                      onClick={() => setShowSteps(!showSteps)}
+                      className="flex items-center gap-2 text-sm text-[#1a1a1a]/60 hover:text-[#1a1a1a] transition-colors"
+                    >
+                      <svg
+                        className={`w-4 h-4 transition-transform ${showSteps ? "rotate-180" : ""}`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
                       >
-                        <div className="w-7 h-7 bg-[#1a1a1a]/5 rounded-lg flex items-center justify-center text-sm font-medium text-[#1a1a1a]/60 flex-shrink-0">
-                          {step.step_number}
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-[#1a1a1a]">{step.description}</p>
-                          {step.probability < 1 && (
-                            <p className="text-xs text-[#1a1a1a]/40 mt-1">
-                              {Math.round(step.probability * 100)}% likelihood
-                            </p>
-                          )}
-                        </div>
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                      {showSteps ? "Hide" : "Show"} procedure steps ({mainSteps.length})
+                    </button>
+
+                    {showSteps && (
+                      <div className="mt-4 space-y-2">
+                        {mainSteps.map((step) => (
+                          <div
+                            key={step.step_number}
+                            className="flex items-start gap-3 p-4 bg-white rounded-xl border border-[#1a1a1a]/5"
+                          >
+                            <div className="w-7 h-7 bg-[#1a1a1a]/5 rounded-lg flex items-center justify-center text-sm font-medium text-[#1a1a1a]/60 flex-shrink-0">
+                              {step.step_number}
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-[#1a1a1a]">{step.description}</p>
+                              {step.probability < 1 && (
+                                <p className="text-xs text-[#1a1a1a]/40 mt-1">
+                                  {Math.round(step.probability * 100)}% likelihood
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    )}
                   </div>
                 )}
-              </div>
-            )}
 
-            {/* Sort Controls */}
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-medium text-[#1a1a1a]/60">Providers</h2>
-              <div className="flex items-center gap-2">
-                <label className="text-sm text-[#1a1a1a]/40">Sort:</label>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as SortOption)}
-                  className="px-3 py-2 bg-white border border-[#1a1a1a]/10 rounded-lg text-sm text-[#1a1a1a] focus:outline-none focus:ring-2 focus:ring-[#1a1a1a]/20"
-                >
-                  {sortOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+                {/* Sort Controls */}
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-sm font-medium text-[#1a1a1a]/60">Providers</h2>
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm text-[#1a1a1a]/40">Sort:</label>
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value as SortOption)}
+                      className="px-3 py-2 bg-white border border-[#1a1a1a]/10 rounded-lg text-sm text-[#1a1a1a] focus:outline-none focus:ring-2 focus:ring-[#1a1a1a]/20"
+                    >
+                      {sortOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
 
-            {/* Provider Results */}
-            <div className="space-y-3">
+                {/* Provider Results */}
+                <div className="space-y-3">
               {providers.length === 0 && (
                 <div className="py-12 text-center bg-white rounded-2xl border border-[#1a1a1a]/5">
                   <p className="text-[#1a1a1a]/50">No provider pricing data available.</p>
@@ -627,6 +644,37 @@ ${providerSummaries}`;
                   </div>
                 );
               })}
+                </div>
+              </div>
+
+              {/* Right Column: Map */}
+              <div className="hidden lg:block">
+                <div className="sticky top-8 h-[calc(100vh-4rem)]">
+                  {providers.length > 0 && process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN && (
+                    <ProvidersMap
+                      providers={providers}
+                      mapboxToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}
+                      selectedIndex={expandedProvider}
+                      onProviderClick={(index) => {
+                        const sortedIndex = sortedProviders.findIndex(
+                          (p) => p.name === providers[index]?.name
+                        );
+                        if (sortedIndex !== -1) {
+                          setExpandedProvider(sortedIndex);
+                        }
+                      }}
+                      onRequestQuote={(provider) => {
+                        const fullProvider = providers.find(
+                          (p) => p.name === provider.name && p.address === provider.address
+                        );
+                        if (fullProvider) {
+                          setOutreachProvider(fullProvider);
+                        }
+                      }}
+                    />
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* Chat Panel */}

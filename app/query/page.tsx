@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import PopularProcedures from "@/components/PopularProcedures";
+import { PopularProcedure } from "@/lib/popular-procedures";
 
 // ============================================================================
 // Types
@@ -234,13 +236,13 @@ function SemanticSearchInput({
   return (
     <div ref={containerRef} className="relative">
       {/* Input Field */}
-      <div className={`relative transition-all duration-300 ${isOpen ? "ring-2 ring-[#1a1a1a] ring-offset-2" : ""}`}>
+      <div className={`relative transition-all duration-300 ${isOpen ? "ring-2 ring-[#2DD4BF] ring-offset-2 rounded-2xl" : ""}`}>
         <div className="absolute left-5 top-1/2 -translate-y-1/2 pointer-events-none">
           {searchState.isLoading ? (
-            <div className="w-5 h-5 border-2 border-[#1a1a1a] border-t-transparent rounded-full animate-spin" />
+            <div className="w-5 h-5 border-2 border-[#0A4D4D] border-t-transparent rounded-full animate-spin" />
           ) : (
             <svg
-              className="w-5 h-5 text-[#1a1a1a]/30"
+              className="w-5 h-5 text-[#5F7A7A]"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -263,7 +265,7 @@ function SemanticSearchInput({
           onFocus={handleInputFocus}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
-          className="w-full pl-14 pr-12 py-5 bg-white border border-[#1a1a1a]/10 rounded-2xl text-lg focus:outline-none transition-colors placeholder:text-[#1a1a1a]/30"
+          className="w-full pl-14 pr-12 py-5 bg-white border-2 border-[#0F2E2E]/10 rounded-2xl text-lg text-[#0F2E2E] focus:outline-none focus:border-[#2DD4BF] transition-all placeholder:text-[#94A3A3] shadow-sm"
           autoComplete="off"
           aria-expanded={isOpen}
           aria-haspopup="listbox"
@@ -279,11 +281,11 @@ function SemanticSearchInput({
               setSearchState({ isLoading: false, error: null, suggestions: [] });
               inputRef.current?.focus();
             }}
-            className="absolute right-5 top-1/2 -translate-y-1/2 p-1 hover:bg-[#1a1a1a]/5 rounded-full transition-colors"
+            className="absolute right-5 top-1/2 -translate-y-1/2 p-1.5 hover:bg-[#E8F5F0] rounded-full transition-colors"
             aria-label="Clear search"
           >
             <svg
-              className="w-5 h-5 text-[#1a1a1a]/30 hover:text-[#1a1a1a]/60"
+              className="w-5 h-5 text-[#5F7A7A] hover:text-[#0F2E2E]"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -297,7 +299,7 @@ function SemanticSearchInput({
       {/* Suggestion Hints */}
       {!isOpen && !selectedResult && query.length === 0 && (
         <div className="mt-4 flex flex-wrap gap-2 justify-center">
-          <span className="text-xs text-[#1a1a1a]/40">Try:</span>
+          <span className="text-xs text-[#5F7A7A]">Try:</span>
           {["knee replacement", "MRI scan", "colonoscopy"].map((hint) => (
             <button
               key={hint}
@@ -305,7 +307,7 @@ function SemanticSearchInput({
                 setQuery(hint);
                 setIsOpen(true);
               }}
-              className="text-xs px-3 py-1.5 border border-[#1a1a1a]/10 hover:border-[#1a1a1a]/30 text-[#1a1a1a]/60 hover:text-[#1a1a1a] rounded-full transition-all"
+              className="text-xs px-3 py-1.5 bg-[#E8F5F0] hover:bg-[#CCFBF1] text-[#0A4D4D] rounded-full transition-all font-medium"
             >
               {hint}
             </button>
@@ -315,11 +317,11 @@ function SemanticSearchInput({
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute z-50 w-full mt-2 bg-white rounded-2xl shadow-xl border border-[#1a1a1a]/5 overflow-hidden">
+        <div className="absolute z-50 w-full mt-3 bg-white rounded-2xl shadow-lg border border-[#0F2E2E]/10 overflow-hidden">
           {searchState.isLoading && query.length >= 2 && (
             <div className="px-6 py-8 text-center">
-              <div className="w-6 h-6 border-2 border-[#1a1a1a] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-              <p className="text-sm text-[#1a1a1a]/60">Searching...</p>
+              <div className="w-6 h-6 border-2 border-[#0A4D4D] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+              <p className="text-sm text-[#5F7A7A]">Searching...</p>
             </div>
           )}
 
@@ -334,8 +336,8 @@ function SemanticSearchInput({
             searchState.suggestions.length === 0 &&
             query.length >= 2 && (
               <div className="px-6 py-8 text-center">
-                <p className="text-[#1a1a1a]/60 text-sm">No procedures found</p>
-                <p className="text-[#1a1a1a]/40 text-xs mt-1">Try different keywords</p>
+                <p className="text-[#5F7A7A] text-sm">No procedures found</p>
+                <p className="text-[#94A3A3] text-xs mt-1">Try different keywords</p>
               </div>
             )}
 
@@ -343,8 +345,8 @@ function SemanticSearchInput({
             !searchState.error &&
             searchState.suggestions.length > 0 && (
               <>
-                <div className="px-5 py-3 border-b border-[#1a1a1a]/5">
-                  <p className="text-xs text-[#1a1a1a]/40">
+                <div className="px-5 py-3 border-b border-[#0F2E2E]/5 bg-[#F2FAF7]">
+                  <p className="text-xs text-[#5F7A7A]">
                     {searchState.suggestions.length} results
                     {searchState.searchTimeMs && ` · ${searchState.searchTimeMs}ms`}
                   </p>
@@ -361,27 +363,27 @@ function SemanticSearchInput({
                         aria-selected={index === highlightedIndex}
                         onClick={() => handleSelect(suggestion)}
                         onMouseEnter={() => setHighlightedIndex(index)}
-                        className={`px-5 py-4 cursor-pointer transition-colors border-b border-[#1a1a1a]/5 last:border-0 ${
-                          index === highlightedIndex ? "bg-[#1a1a1a]/[0.03]" : ""
+                        className={`px-5 py-4 cursor-pointer transition-colors border-b border-[#0F2E2E]/5 last:border-0 ${
+                          index === highlightedIndex ? "bg-[#E8F5F0]" : ""
                         }`}
                       >
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium text-[#1a1a1a] truncate">{suggestion.name}</p>
+                            <p className="font-medium text-[#0F2E2E] truncate">{suggestion.name}</p>
                             <div className="flex items-center gap-2 mt-1.5">
-                              <span className="text-xs text-[#1a1a1a]/40 capitalize">
+                              <span className="text-xs text-[#5F7A7A] capitalize">
                                 {suggestion.category}
                               </span>
-                              <span className="text-[#1a1a1a]/20">·</span>
-                              <span className={`text-xs ${
-                                relevance >= 70 ? "text-emerald-600" : "text-[#1a1a1a]/40"
+                              <span className="text-[#94A3A3]">·</span>
+                              <span className={`text-xs font-medium ${
+                                relevance >= 70 ? "text-[#22C55E]" : "text-[#5F7A7A]"
                               }`}>
                                 {relevance}% match
                               </span>
                             </div>
                           </div>
                           {index === highlightedIndex && (
-                            <svg className="w-4 h-4 text-[#1a1a1a]/30 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-4 h-4 text-[#2DD4BF] flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                             </svg>
                           )}
@@ -391,10 +393,10 @@ function SemanticSearchInput({
                   })}
                 </ul>
 
-                <div className="px-5 py-3 bg-[#1a1a1a]/[0.02] border-t border-[#1a1a1a]/5">
-                  <p className="text-xs text-[#1a1a1a]/30 flex items-center gap-4">
-                    <span><kbd className="px-1.5 py-0.5 bg-white rounded border border-[#1a1a1a]/10 text-[10px] font-mono">↑↓</kbd> navigate</span>
-                    <span><kbd className="px-1.5 py-0.5 bg-white rounded border border-[#1a1a1a]/10 text-[10px] font-mono">↵</kbd> select</span>
+                <div className="px-5 py-3 bg-[#F2FAF7] border-t border-[#0F2E2E]/5">
+                  <p className="text-xs text-[#5F7A7A] flex items-center gap-4">
+                    <span><kbd className="px-1.5 py-0.5 bg-white rounded border border-[#0F2E2E]/10 text-[10px] font-mono">↑↓</kbd> navigate</span>
+                    <span><kbd className="px-1.5 py-0.5 bg-white rounded border border-[#0F2E2E]/10 text-[10px] font-mono">↵</kbd> select</span>
                   </p>
                 </div>
               </>
@@ -405,7 +407,7 @@ function SemanticSearchInput({
             searchState.suggestions.length === 0 &&
             query.length < 2 && (
               <div className="px-6 py-8 text-center">
-                <p className="text-sm text-[#1a1a1a]/60">Type at least 2 characters</p>
+                <p className="text-sm text-[#5F7A7A]">Type at least 2 characters</p>
               </div>
             )}
         </div>
@@ -432,19 +434,19 @@ function SelectedProcedureCard({
   const availableMetros = procedure.metroAvailability.filter((m) => m.available);
 
   return (
-    <div className="mt-8 p-6 bg-[#F5F5F3] rounded-2xl">
+    <div className="mt-8 p-6 bg-white rounded-2xl border-2 border-[#2DD4BF]/20 shadow-md animate-scale-in">
       <div className="flex items-start justify-between mb-6">
         <div>
-          <p className="text-xs tracking-[0.15em] uppercase text-[#1a1a1a]/40 mb-2">Selected</p>
-          <h3 className="font-display text-xl text-[#1a1a1a]">{procedure.name}</h3>
-          <p className="text-sm text-[#1a1a1a]/50 mt-1 capitalize">{procedure.category}</p>
+          <span className="badge badge-accent mb-2">Selected</span>
+          <h3 className="font-display text-xl text-[#0F2E2E]">{procedure.name}</h3>
+          <p className="text-sm text-[#5F7A7A] mt-1 capitalize">{procedure.category}</p>
         </div>
         <button
           onClick={onClear}
-          className="p-2 hover:bg-white rounded-lg transition-colors"
+          className="p-2 hover:bg-[#E8F5F0] rounded-xl transition-colors"
           aria-label="Clear selection"
         >
-          <svg className="w-5 h-5 text-[#1a1a1a]/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-5 h-5 text-[#5F7A7A]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
@@ -452,10 +454,10 @@ function SelectedProcedureCard({
 
       {procedure.keywords.length > 0 && (
         <div className="mb-6">
-          <p className="text-xs text-[#1a1a1a]/40 mb-2">Related terms</p>
+          <p className="text-xs text-[#5F7A7A] mb-2">Related terms</p>
           <div className="flex flex-wrap gap-2">
             {procedure.keywords.slice(0, 4).map((keyword) => (
-              <span key={keyword} className="px-2.5 py-1 bg-white text-[#1a1a1a]/60 text-xs rounded-full">
+              <span key={keyword} className="px-3 py-1.5 bg-[#F2FAF7] text-[#0A4D4D] text-xs rounded-full font-medium">
                 {keyword}
               </span>
             ))}
@@ -463,25 +465,25 @@ function SelectedProcedureCard({
         </div>
       )}
 
-      <div className="mb-6">
-        <p className="text-xs text-[#1a1a1a]/40 mb-3">Select location</p>
+      <div className="mb-2">
+        <p className="text-xs text-[#5F7A7A] mb-3">Select location to view prices</p>
         {availableMetros.length === 0 ? (
-          <p className="text-sm text-[#1a1a1a]/50 italic">Not available in any location yet</p>
+          <p className="text-sm text-[#5F7A7A] italic">Not available in any location yet</p>
         ) : (
           <div className="grid gap-2">
             {availableMetros.map((metro) => (
               <button
                 key={metro.slug}
                 onClick={() => onViewPricing(metro.slug)}
-                className="w-full p-4 bg-white hover:bg-[#1a1a1a] text-[#1a1a1a] hover:text-white rounded-xl text-left transition-all flex items-center justify-between group"
+                className="w-full p-4 bg-[#0A4D4D] hover:bg-[#0D5F5F] text-white rounded-xl text-left transition-all flex items-center justify-between group shadow-sm hover:shadow-md"
               >
                 <div className="flex items-center gap-3">
-                  <svg className="w-5 h-5 text-[#1a1a1a]/30 group-hover:text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-[#2DD4BF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                   </svg>
                   <span className="font-medium">{metro.name}</span>
                 </div>
-                <svg className="w-4 h-4 text-[#1a1a1a]/30 group-hover:text-white/50 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 text-[#2DD4BF] group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </button>
@@ -518,10 +520,10 @@ export default function QueryPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAFAF8]">
+    <div className="min-h-screen bg-gradient-to-b from-[#FDFCFA] to-[#F2FAF7]">
       {/* Navigation */}
-      <nav className="border-b border-[#1a1a1a]/5">
-        <div className="max-w-2xl mx-auto px-6 py-5 flex items-center justify-between">
+      <nav className="border-b border-[#0F2E2E]/5 bg-white/80 backdrop-blur-sm">
+        <div className="max-w-2xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/" className="group">
             <img
               src="/justprice-logo.jpeg"
@@ -529,20 +531,29 @@ export default function QueryPage() {
               className="h-9 w-auto group-hover:opacity-80 transition-opacity"
             />
           </Link>
+          <Link
+            href="/"
+            className="text-sm text-[#5F7A7A] hover:text-[#0A4D4D] transition-colors font-medium"
+          >
+            Back to Home
+          </Link>
         </div>
       </nav>
 
       {/* Main Content */}
       <main className="max-w-2xl mx-auto px-6 py-16 md:py-24">
         {/* Header */}
-        <div className="mb-12">
-          <p className="text-sm tracking-[0.2em] uppercase text-[#1a1a1a]/40 mb-4">
+        <div className="mb-12 text-center">
+          <span className="inline-flex items-center gap-2 px-4 py-2 bg-[#CCFBF1] text-[#0A4D4D] text-sm font-medium rounded-full mb-6">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
             Price Search
-          </p>
-          <h1 className="font-display text-4xl md:text-5xl font-normal leading-[1.1] tracking-tight text-[#1a1a1a] mb-4">
+          </span>
+          <h1 className="font-display text-4xl md:text-5xl font-normal leading-[1.1] tracking-tight text-[#0F2E2E] mb-4">
             Find your procedure
           </h1>
-          <p className="text-lg text-[#1a1a1a]/50">
+          <p className="text-lg text-[#5F7A7A]">
             Describe what you need in plain language. Our AI will find matching procedures.
           </p>
         </div>
@@ -555,6 +566,27 @@ export default function QueryPage() {
           />
         </div>
 
+        {/* Popular Procedures - show when nothing selected */}
+        {!selectedProcedure && (
+          <div className="mb-8">
+            <PopularProcedures
+              onSelect={(proc: PopularProcedure) => {
+                handleProcedureSelect({
+                  id: proc.id,
+                  name: proc.name,
+                  score: 1,
+                  keywords: [],
+                  category: proc.category,
+                  metroAvailability: [
+                    { slug: "Los_Angeles", name: "Los Angeles", available: true },
+                    { slug: "Miami", name: "Miami", available: true },
+                  ],
+                });
+              }}
+            />
+          </div>
+        )}
+
         {/* Selected Procedure */}
         {selectedProcedure && (
           <SelectedProcedureCard
@@ -565,9 +597,9 @@ export default function QueryPage() {
         )}
 
         {/* Footer Note */}
-        <div className="mt-16 pt-8 border-t border-[#1a1a1a]/5">
-          <div className="flex items-center justify-center gap-2 text-xs text-[#1a1a1a]/30">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="mt-16 pt-8 border-t border-[#0F2E2E]/5">
+          <div className="flex items-center justify-center gap-2 text-xs text-[#5F7A7A]">
+            <svg className="w-4 h-4 text-[#2DD4BF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
             <span>Powered by semantic search</span>

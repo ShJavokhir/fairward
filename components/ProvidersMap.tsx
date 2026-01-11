@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import Map, { Marker, Popup, NavigationControl } from "react-map-gl/mapbox";
+import type { MapRef } from "react-map-gl/mapbox";
+import Supercluster from "supercluster";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 interface Provider {
@@ -22,6 +24,8 @@ interface ProvidersMapProps {
   onRequestQuote?: (provider: Provider) => void;
   selectedIndex?: number | null;
 }
+
+type ProviderPoint = GeoJSON.Feature<GeoJSON.Point, GeocodedProvider>;
 
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat("en-US", {
@@ -51,6 +55,9 @@ export default function ProvidersMap({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [popupInfo, setPopupInfo] = useState<GeocodedProvider | null>(null);
+  const [zoom, setZoom] = useState(10);
+  const [bounds, setBounds] = useState<[number, number, number, number] | null>(null);
+  const mapRef = useRef<MapRef>(null);
 
   // Geocode addresses on mount
   useEffect(() => {
@@ -105,8 +112,8 @@ export default function ProvidersMap({
     geocodeAddresses();
   }, [providers]);
 
-  // Calculate map bounds
-  const bounds = useMemo(() => {
+  // Calculate initial map bounds from data
+  const dataBounds = useMemo(() => {
     if (geocodedProviders.length === 0) return null;
 
     const lngs = geocodedProviders.map((p) => p.lng);
@@ -122,7 +129,7 @@ export default function ProvidersMap({
 
   // Calculate center and zoom
   const initialViewState = useMemo(() => {
-    if (!bounds) {
+    if (!dataBounds) {
       return {
         longitude: -118.2437, // Default to LA
         latitude: 34.0522,
@@ -130,12 +137,12 @@ export default function ProvidersMap({
       };
     }
 
-    const centerLng = (bounds.minLng + bounds.maxLng) / 2;
-    const centerLat = (bounds.minLat + bounds.maxLat) / 2;
+    const centerLng = (dataBounds.minLng + dataBounds.maxLng) / 2;
+    const centerLat = (dataBounds.minLat + dataBounds.maxLat) / 2;
 
     // Calculate zoom based on bounds spread
-    const lngSpread = bounds.maxLng - bounds.minLng;
-    const latSpread = bounds.maxLat - bounds.minLat;
+    const lngSpread = dataBounds.maxLng - dataBounds.minLng;
+    const latSpread = dataBounds.maxLat - dataBounds.minLat;
     const maxSpread = Math.max(lngSpread, latSpread);
 
     let zoom = 11;
@@ -150,7 +157,7 @@ export default function ProvidersMap({
       latitude: centerLat,
       zoom,
     };
-  }, [bounds]);
+  }, [dataBounds]);
 
   // Price range for color scale
   const priceRange = useMemo(() => {
@@ -176,6 +183,47 @@ export default function ProvidersMap({
     },
     [priceRange]
   );
+
+  // Create supercluster index
+  const superclusterIndex = useMemo(() => {
+    const index = new Supercluster<GeocodedProvider>({
+      radius: 60,
+      maxZoom: 14,
+    });
+
+    const points: ProviderPoint[] = geocodedProviders.map((provider) => ({
+      type: "Feature",
+      properties: provider,
+      geometry: {
+        type: "Point",
+        coordinates: [provider.lng, provider.lat],
+      },
+    }));
+
+    index.load(points);
+    return index;
+  }, [geocodedProviders]);
+
+  // Get clusters for current viewport
+  const clusters = useMemo(() => {
+    if (!bounds || geocodedProviders.length === 0) return [];
+    return superclusterIndex.getClusters(bounds, Math.floor(zoom));
+  }, [superclusterIndex, bounds, zoom, geocodedProviders]);
+
+  // Handle map move
+  const onMapMove = useCallback(() => {
+    if (!mapRef.current) return;
+    const map = mapRef.current.getMap();
+    const mapBounds = map.getBounds();
+    if (!mapBounds) return;
+    setBounds([
+      mapBounds.getWest(),
+      mapBounds.getSouth(),
+      mapBounds.getEast(),
+      mapBounds.getNorth(),
+    ]);
+    setZoom(map.getZoom());
+  }, []);
 
   if (isLoading) {
     return (
@@ -207,28 +255,73 @@ export default function ProvidersMap({
   return (
     <div className="w-full h-full min-h-80 rounded-2xl overflow-hidden border border-[#1a1a1a]/5">
       <Map
+        ref={mapRef}
         mapboxAccessToken={mapboxToken}
         initialViewState={initialViewState}
         style={{ width: "100%", height: "100%" }}
         mapStyle="mapbox://styles/mapbox/light-v11"
         attributionControl={false}
+        onMove={onMapMove}
+        onLoad={onMapMove}
       >
         <NavigationControl position="top-right" showCompass={false} />
 
-        {geocodedProviders.map((provider, index) => {
-          const isSelected = selectedIndex === index;
+        {clusters.map((cluster) => {
+          const [lng, lat] = cluster.geometry.coordinates;
+          const isCluster = "cluster" in cluster.properties && cluster.properties.cluster;
+
+          if (isCluster) {
+            const pointCount = (cluster.properties as { point_count: number }).point_count;
+            const size = Math.min(60, 30 + (pointCount / geocodedProviders.length) * 30);
+
+            return (
+              <Marker
+                key={`cluster-${cluster.id}`}
+                longitude={lng}
+                latitude={lat}
+                anchor="center"
+                onClick={() => {
+                  const expansionZoom = Math.min(
+                    superclusterIndex.getClusterExpansionZoom(cluster.id as number),
+                    20
+                  );
+                  mapRef.current?.flyTo({
+                    center: [lng, lat],
+                    zoom: expansionZoom,
+                    duration: 500,
+                  });
+                }}
+              >
+                <div
+                  className="cursor-pointer flex items-center justify-center rounded-full bg-[#0A4D4D] text-white font-medium shadow-lg hover:scale-105 transition-transform"
+                  style={{ width: size, height: size }}
+                >
+                  {pointCount}
+                </div>
+              </Marker>
+            );
+          }
+
+          // Individual marker
+          const provider = cluster.properties as GeocodedProvider;
+          const providerIndex = geocodedProviders.findIndex(
+            (p) => p.lng === lng && p.lat === lat
+          );
+          const isSelected = selectedIndex === providerIndex;
           const color = getMarkerColor(provider.totalCost);
 
           return (
             <Marker
-              key={`${provider.name}-${index}`}
-              longitude={provider.lng}
-              latitude={provider.lat}
+              key={`marker-${provider.name}-${lng}-${lat}`}
+              longitude={lng}
+              latitude={lat}
               anchor="bottom"
               onClick={(e) => {
                 e.originalEvent.stopPropagation();
                 setPopupInfo(provider);
-                onProviderClick?.(index);
+                if (providerIndex !== -1) {
+                  onProviderClick?.(providerIndex);
+                }
               }}
             >
               <div

@@ -1,17 +1,60 @@
 /* Custom fonts - must be first */
-@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap');
 
 @import "tailwindcss";
 
+/* ============================================================================
+   VoyageAI-Inspired Color System for Healthcare
+   - Calming teal/sage palette
+   - Professional yet approachable
+   ============================================================================ */
+
 :root {
-  --background: #FAFAF8;
-  --foreground: #1a1a1a;
+  /* Core colors */
+  --background: #FDFCFA;
+  --foreground: #0F2E2E;
+
+  /* Primary - Deep teal (professional, calming) */
+  --primary: #0A4D4D;
+  --primary-hover: #0D5F5F;
+  --primary-light: #E8F5F0;
+  --primary-lighter: #F2FAF7;
+
+  /* Accent - Seafoam (friendly, approachable) */
+  --accent: #2DD4BF;
+  --accent-light: #CCFBF1;
+
+  /* Success - Green (savings, positive) */
+  --success: #22C55E;
+  --success-light: #DCFCE7;
+
+  /* Warning - Amber */
+  --warning: #F59E0B;
+  --warning-light: #FEF3C7;
+
+  /* Muted text */
+  --muted: #5F7A7A;
+  --muted-light: #94A3A3;
+
+  /* Surfaces */
+  --card: #FFFFFF;
+  --card-hover: #FAFFFE;
+  --border: rgba(15, 46, 46, 0.08);
+  --border-strong: rgba(15, 46, 46, 0.15);
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(15, 46, 46, 0.04);
+  --shadow-md: 0 4px 12px rgba(15, 46, 46, 0.08);
+  --shadow-lg: 0 8px 24px rgba(15, 46, 46, 0.12);
+  --shadow-glow: 0 0 0 4px rgba(45, 212, 191, 0.15);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: 'DM Sans', system-ui, -apple-system, sans-serif;
+  --color-primary: var(--primary);
+  --color-accent: var(--accent);
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: ui-monospace, monospace;
   --font-display: 'Instrument Serif', Georgia, serif;
 }
@@ -29,31 +72,38 @@ html {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   font-size: 16px;
-  line-height: 1.6;
+  line-height: 1.7;
 }
 
-/* Display font utility */
+/* ============================================================================
+   Typography
+   ============================================================================ */
+
 .font-display {
   font-family: 'Instrument Serif', Georgia, serif;
   font-weight: 400;
 }
 
-/* Refined animations */
+h1, h2, h3, .font-display {
+  text-rendering: optimizeLegibility;
+  letter-spacing: -0.02em;
+}
+
+/* ============================================================================
+   Animations
+   ============================================================================ */
+
 @keyframes fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes fade-in-up {
   from {
     opacity: 0;
-    transform: translateY(24px);
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
@@ -62,53 +112,232 @@ body {
 }
 
 @keyframes subtle-float {
-  0%, 100% {
-    transform: translateY(0);
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
   }
-  50% {
-    transform: translateY(-6px);
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }
 
 .animate-fade-in {
-  animation: fade-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fade-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .animate-fade-in-up {
-  animation: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .animate-float {
-  animation: subtle-float 6s ease-in-out infinite;
+  animation: subtle-float 5s ease-in-out infinite;
 }
 
-/* Animation delays - staggered reveals */
-.animation-delay-100 {
-  animation-delay: 100ms;
-  opacity: 0;
+.animate-scale-in {
+  animation: scale-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-.animation-delay-200 {
-  animation-delay: 200ms;
-  opacity: 0;
+/* Animation delays */
+.animation-delay-100 { animation-delay: 100ms; opacity: 0; }
+.animation-delay-200 { animation-delay: 200ms; opacity: 0; }
+.animation-delay-300 { animation-delay: 300ms; opacity: 0; }
+.animation-delay-400 { animation-delay: 400ms; opacity: 0; }
+.animation-delay-500 { animation-delay: 500ms; opacity: 0; }
+
+/* ============================================================================
+   Skeleton Loaders
+   ============================================================================ */
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--primary-lighter) 0%,
+    var(--primary-light) 50%,
+    var(--primary-lighter) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 8px;
 }
 
-.animation-delay-300 {
-  animation-delay: 300ms;
-  opacity: 0;
+.skeleton-text {
+  height: 1em;
+  margin-bottom: 0.5em;
+  border-radius: 4px;
 }
 
-.animation-delay-400 {
-  animation-delay: 400ms;
-  opacity: 0;
+.skeleton-heading {
+  height: 2em;
+  width: 60%;
+  border-radius: 6px;
 }
 
-.animation-delay-500 {
-  animation-delay: 500ms;
-  opacity: 0;
+.skeleton-card {
+  height: 120px;
+  border-radius: 16px;
 }
 
-/* Premium scrollbar */
+/* ============================================================================
+   Card Styles
+   ============================================================================ */
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-strong);
+  transform: translateY(-2px);
+}
+
+.card-interactive {
+  cursor: pointer;
+}
+
+.card-interactive:hover {
+  background: var(--card-hover);
+}
+
+/* ============================================================================
+   Badge Styles
+   ============================================================================ */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 9999px;
+  letter-spacing: 0.01em;
+}
+
+.badge-success {
+  background: var(--success-light);
+  color: #166534;
+}
+
+.badge-accent {
+  background: var(--accent-light);
+  color: #0D5F5F;
+}
+
+.badge-warning {
+  background: var(--warning-light);
+  color: #92400E;
+}
+
+.badge-muted {
+  background: var(--primary-lighter);
+  color: var(--muted);
+}
+
+/* ============================================================================
+   Button Styles
+   ============================================================================ */
+
+.btn-primary {
+  background: var(--primary);
+  color: white;
+  font-weight: 500;
+  padding: 14px 28px;
+  border-radius: 14px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-primary:hover {
+  background: var(--primary-hover);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-secondary {
+  background: var(--primary-light);
+  color: var(--primary);
+  font-weight: 500;
+  padding: 14px 28px;
+  border-radius: 14px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-secondary:hover {
+  background: var(--accent-light);
+}
+
+/* ============================================================================
+   Input Styles
+   ============================================================================ */
+
+.input-search {
+  width: 100%;
+  padding: 18px 24px 18px 56px;
+  background: var(--card);
+  border: 2px solid var(--border);
+  border-radius: 16px;
+  font-size: 17px;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.input-search:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: var(--shadow-glow);
+}
+
+.input-search::placeholder {
+  color: var(--muted-light);
+}
+
+/* ============================================================================
+   Progress Bar
+   ============================================================================ */
+
+.progress-bar {
+  height: 6px;
+  background: var(--primary-light);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--success));
+  border-radius: 3px;
+  transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ============================================================================
+   Scrollbar
+   ============================================================================ */
+
 ::-webkit-scrollbar {
   width: 8px;
 }
@@ -118,21 +347,27 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(26, 26, 26, 0.15);
+  background: var(--border-strong);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(26, 26, 26, 0.25);
+  background: var(--muted-light);
 }
 
-/* Focus states */
+/* ============================================================================
+   Focus States
+   ============================================================================ */
+
 :focus-visible {
-  outline: 2px solid rgba(26, 26, 26, 0.5);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
-/* Link underline animation */
+/* ============================================================================
+   Link Underline Animation
+   ============================================================================ */
+
 .link-underline {
   position: relative;
   text-decoration: none;
@@ -144,8 +379,8 @@ body {
   left: 0;
   bottom: -2px;
   width: 0;
-  height: 1px;
-  background: currentColor;
+  height: 1.5px;
+  background: var(--accent);
   transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -153,30 +388,33 @@ body {
   width: 100%;
 }
 
-/* Smooth image loading */
+/* ============================================================================
+   Image Loading
+   ============================================================================ */
+
 img {
   opacity: 0;
-  transition: opacity 0.5s ease;
+  transition: opacity 0.4s ease;
 }
 
 img[src] {
   opacity: 1;
 }
 
-/* Better text rendering for large type */
-h1, h2, h3, .font-display {
-  text-rendering: optimizeLegibility;
-  letter-spacing: -0.02em;
-}
+/* ============================================================================
+   Responsive Typography
+   ============================================================================ */
 
-/* Responsive typography scale */
 @media (max-width: 640px) {
   html {
     font-size: 15px;
   }
 }
 
-/* Reduced motion */
+/* ============================================================================
+   Reduced Motion
+   ============================================================================ */
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -189,4 +427,40 @@ h1, h2, h3, .font-display {
   html {
     scroll-behavior: auto;
   }
+}
+
+/* ============================================================================
+   Utility Classes
+   ============================================================================ */
+
+.text-gradient {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.bg-gradient-soft {
+  background: linear-gradient(180deg, var(--background) 0%, var(--primary-lighter) 100%);
+}
+
+.border-gradient {
+  border: 2px solid transparent;
+  background: linear-gradient(var(--card), var(--card)) padding-box,
+              linear-gradient(135deg, var(--accent), var(--primary-light)) border-box;
+}
+
+/* Section backgrounds */
+.section-light {
+  background: var(--primary-lighter);
+}
+
+.section-dark {
+  background: var(--primary);
+  color: white;
+}
+
+/* Number styling for prices */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
 }

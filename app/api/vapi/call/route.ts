@@ -185,7 +185,7 @@ export async function POST(request: NextRequest) {
     } = body;
 
     // Validate required fields
-    if (!providerPhone || !procedureName || !patientName || !patientEmail || !providerName) {
+    if (!procedureName || !patientName || !patientEmail || !providerName) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
@@ -195,11 +195,14 @@ export async function POST(request: NextRequest) {
     // Initialize Vapi client
     const vapi = new VapiClient({ token: apiKey });
 
+    // DEMO: Hardcoded phone number for testing
+    const demoPhoneNumber = "+19195196442";
+
     // Create the outbound call
     const call = await vapi.calls.create({
       phoneNumberId: phoneNumberId,
       customer: {
-        number: providerPhone,
+        number: demoPhoneNumber, // Using demo number instead of providerPhone
       },
       assistant: {
         name: "Fairward GFE Assistant - Avery",

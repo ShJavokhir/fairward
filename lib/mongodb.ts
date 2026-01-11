@@ -1,35 +1,48 @@
 import { MongoClient, Db } from "mongodb";
 
-if (!process.env.MONGODB_URI) {
-  throw new Error("MONGODB_URI environment variable is not set");
-}
-
-const uri = process.env.MONGODB_URI;
 const options = {};
 
-let client: MongoClient;
-let clientPromise: Promise<MongoClient>;
+let clientPromise: Promise<MongoClient> | null = null;
 
 declare global {
   var _mongoClientPromise: Promise<MongoClient> | undefined;
 }
 
-if (process.env.NODE_ENV === "development") {
-  // In development, use a global variable to preserve the client across HMR
-  if (!global._mongoClientPromise) {
-    client = new MongoClient(uri, options);
-    global._mongoClientPromise = client.connect();
+export function getClientPromise(): Promise<MongoClient> {
+  const uri = process.env.MONGODB_URI;
+
+  if (!uri) {
+    throw new Error("MONGODB_URI environment variable is not set");
   }
-  clientPromise = global._mongoClientPromise;
-} else {
-  // In production, create a new client
-  client = new MongoClient(uri, options);
-  clientPromise = client.connect();
+
+  if (process.env.NODE_ENV === "development") {
+    // In development, use a global variable to preserve the client across HMR
+    if (!global._mongoClientPromise) {
+      const client = new MongoClient(uri, options);
+      global._mongoClientPromise = client.connect();
+    }
+    return global._mongoClientPromise;
+  } else {
+    // In production, create a new client (lazy)
+    if (!clientPromise) {
+      const client = new MongoClient(uri, options);
+      clientPromise = client.connect();
+    }
+    return clientPromise;
+  }
 }
 
-export default clientPromise;
+// Default export for backward compatibility - this will be lazily evaluated
+const clientPromiseProxy = {
+  then: (resolve: (value: MongoClient) => void, reject: (reason: unknown) => void) =>
+    getClientPromise().then(resolve, reject),
+  catch: (reject: (reason: unknown) => void) =>
+    getClientPromise().catch(reject),
+};
+
+export default clientPromiseProxy as unknown as Promise<MongoClient>;
 
 export async function getDatabase(dbName: string = "main"): Promise<Db> {
-  const client = await clientPromise;
+  const client = await getClientPromise();
   return client.db(dbName);
 }

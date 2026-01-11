@@ -316,9 +316,135 @@ User sends from their own email
 | OA-15 | System requires user action to send—no automated sending |
 | OA-16 | If no email found, agent provides fallback contact method |
 
+### 6.2 Voice Calling
+
+| ID | Requirement |
+|----|-------------|
+| VC-01 | User can initiate a voice call from the browser |
+| VC-02 | Voice assistant introduces itself as calling on behalf of the patient |
+| VC-03 | Voice assistant requests a Good Faith Estimate |
+| VC-04 | Voice assistant references the No Surprises Act |
+| VC-05 | Voice assistant provides procedure name and patient details |
+| VC-06 | Voice assistant handles transfers and holds gracefully |
+| VC-07 | Voice assistant can leave a voicemail if no one answers |
+| VC-08 | User can see call status in real-time |
+| VC-09 | User can end the call at any time |
+| VC-10 | Call transcript is available after the call ends |
+
 ---
 
-## 7. Future Work (Out of Scope)
+## 7. Voice Calling Integration
+
+### 7.1 Overview
+
+Voice calling allows users to request a Good Faith Estimate via phone call directly from the browser. The Vapi Web SDK enables the user's browser to connect to the hospital's billing department with an AI voice assistant that speaks on their behalf.
+
+### 7.2 Technology Stack
+
+| Component | Technology |
+|-----------|------------|
+| Voice SDK | Vapi Web SDK (`@vapi-ai/web`) |
+| Speech-to-Text | Vapi (configurable provider) |
+| LLM | Vapi (configurable provider) |
+| Text-to-Speech | ElevenLabs or PlayHT (via Vapi) |
+
+### 7.3 User Flow
+
+```
+User clicks "Call Provider" button
+    │
+    ▼
+User enters their details:
+    • Full name
+    • Email address
+    • Phone number (for callback)
+    │
+    ▼
+User reviews call script and confirms
+    │
+    ▼
+Browser requests microphone permission
+    │
+    ▼
+[Vapi Web SDK initiates call]
+    │
+    ▼
+User sees real-time call status:
+    • "Connecting..."
+    • "Ringing..."
+    • "Connected"
+    • "On hold"
+    │
+    ▼
+Voice assistant speaks with billing department
+    │
+    ▼
+User can:
+    • Mute/unmute their microphone
+    • End the call
+    • Listen to the conversation
+    │
+    ▼
+Call ends → Transcript displayed
+```
+
+### 7.4 Voice Assistant Configuration
+
+The voice assistant uses a carefully crafted system prompt (see `/docs/voice-assistant-prompt.md`) that includes:
+
+1. **Identity**: Professional patient advocate named Sarah
+2. **Style**: Warm, professional, natural speech patterns
+3. **Task**: Request Good Faith Estimate following specific steps
+4. **Scenarios**: Handle transfers, holds, voicemail, refusals
+
+### 7.5 Variables Passed to Assistant
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| procedureName | Plain language procedure name | "a colonoscopy" |
+| patientName | User's full name | "John Smith" |
+| patientEmail | User's email for receiving estimate | "john@example.com" |
+| patientPhone | User's phone for callbacks | "(555) 123-4567" |
+| insuranceStatus | Insurance or self-pay status | "covered by Blue Shield PPO" |
+| providerName | Hospital/facility name | "Stanford Hospital" |
+| estimatedCost | Fairward's estimated price | "$2,500" |
+
+### 7.6 Call States
+
+| State | Description |
+|-------|-------------|
+| idle | No call in progress |
+| connecting | Initializing connection |
+| ringing | Dialing the provider |
+| connected | Call is active |
+| ended | Call has ended |
+| error | An error occurred |
+
+### 7.7 Events
+
+The Web SDK emits events that the UI should handle:
+
+| Event | Description |
+|-------|-------------|
+| call-start | Call has started |
+| call-end | Call has ended |
+| speech-start | Assistant started speaking |
+| speech-end | Assistant stopped speaking |
+| message | Transcript message received |
+| error | Error occurred |
+
+### 7.8 Error Handling
+
+| Condition | Behavior |
+|-----------|----------|
+| Microphone denied | Show instructions to enable microphone |
+| Network error | Display error message, offer retry |
+| Call failed to connect | Suggest trying again or using email |
+| Provider hung up | Show call summary and transcript |
+
+---
+
+## 8. Future Work (Out of Scope)
 
 Documented for future phases:
 
@@ -326,12 +452,14 @@ Documented for future phases:
 2. **Response tracking** — Monitor user's inbox for provider replies
 3. **Follow-up automation** — Send reminder if no response in X days
 4. **Contact form filling** — Auto-fill web forms instead of email
-5. **Phone outreach** — Voice AI to call billing departments
+5. ~~**Phone outreach** — Voice AI to call billing departments~~ ✅ Implemented
 6. **Multi-provider batch** — Request quotes from multiple providers at once
+7. **Call recording storage** — Save call recordings for user reference
+8. **Outbound phone calls** — Vapi calls the hospital directly (vs browser-based)
 
 ---
 
-## 8. Appendix: Example Good Faith Estimate Request
+## 9. Appendix: Example Good Faith Estimate Request
 
 **Subject:** Good Faith Estimate Request: Colonoscopy (CPT 45385)
 

@@ -1,20 +1,29 @@
 import { VoyageAIClient } from "voyageai";
 
-if (!process.env.VOYAGE_API_KEY) {
-  throw new Error("VOYAGE_API_KEY environment variable is not set");
+let voyageClient: VoyageAIClient | null = null;
+
+function getVoyageClient(): VoyageAIClient {
+  if (!process.env.VOYAGE_API_KEY) {
+    throw new Error("VOYAGE_API_KEY environment variable is not set");
+  }
+
+  if (!voyageClient) {
+    voyageClient = new VoyageAIClient({
+      apiKey: process.env.VOYAGE_API_KEY,
+    });
+  }
+
+  return voyageClient;
 }
 
-const voyageClient = new VoyageAIClient({
-  apiKey: process.env.VOYAGE_API_KEY,
-});
-
-export default voyageClient;
+export default getVoyageClient;
 
 export async function getEmbeddings(
   texts: string[],
   model: string = "voyage-3"
 ): Promise<number[][]> {
-  const response = await voyageClient.embed({
+  const client = getVoyageClient();
+  const response = await client.embed({
     input: texts,
     model,
   });

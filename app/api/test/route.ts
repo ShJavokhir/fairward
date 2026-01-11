@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import clientPromise from "@/lib/mongodb";
+import { getClientPromise } from "@/lib/mongodb";
 import { getEmbedding } from "@/lib/voyage";
 
 export async function GET() {
@@ -7,7 +7,7 @@ export async function GET() {
 
   // Test MongoDB connection
   try {
-    const client = await clientPromise;
+    const client = await getClientPromise();
     await client.db("admin").command({ ping: 1 });
     results.mongodb = { status: "connected" };
   } catch (error) {

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getPricingWithCache } from "@/lib/pricing-cache";
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -14,36 +15,32 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // The external API expects POST with JSON body
-    const response = await fetch("https://simple-backend-ret2i2nfuq-uc.a.run.app/get_results", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-      },
-      body: JSON.stringify({
-        procedure_id: procedureId,
-        metro_slug: metroSlug,
-        price_type: priceType,
-      }),
-    });
+    // Use cache-aside pattern: check cache first, fetch if miss
+    const result = await getPricingWithCache(procedureId, metroSlug, priceType);
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("External API error:", response.status, errorText);
-      return NextResponse.json(
-        { error: "Failed to fetch pricing data" },
-        { status: response.status }
-      );
+    // Add cache headers for debugging/monitoring
+    const headers = new Headers();
+    headers.set("X-Cache", result.fromCache ? "HIT" : "MISS");
+    if (result.cacheAge !== undefined) {
+      headers.set("X-Cache-Age", String(Math.round(result.cacheAge / 1000))); // seconds
     }
 
-    const data = await response.json();
-    return NextResponse.json(data);
+    return NextResponse.json(result.data, { headers });
   } catch (error) {
     console.error("Error fetching pricing:", error);
+
+    // Determine appropriate status code
+    const isExternalError =
+      error instanceof Error && error.message.includes("External API");
+    const statusCode = isExternalError ? 502 : 500;
+
     return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
+      {
+        error: isExternalError
+          ? "Failed to fetch pricing data from external source"
+          : "Internal server error",
+      },
+      { status: statusCode }
     );
   }
 }

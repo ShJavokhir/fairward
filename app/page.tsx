@@ -1,436 +1,955 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-export default function Home() {
-  const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState("");
+// ============================================================================
+// Types
+// ============================================================================
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    router.push(`/query${searchQuery ? `?q=${encodeURIComponent(searchQuery)}` : ""}`);
+interface ProcedureSuggestion {
+  id: string;
+  name: string;
+  category: string;
+  matchScore: number;
+}
+
+interface ProcedureSearchResult {
+  id: string;
+  name: string;
+  score: number;
+  keywords: string[];
+  category: string;
+  metroAvailability: {
+    slug: string;
+    name: string;
+    available: boolean;
+  }[];
+}
+
+interface SearchState {
+  isLoading: boolean;
+  error: string | null;
+  suggestions: ProcedureSuggestion[];
+  searchTimeMs?: number;
+}
+
+// ============================================================================
+// Custom Hook: Debounce
+// ============================================================================
+
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
+// Animated counter component
+function AnimatedNumber({ value, suffix = "" }: { value: string; suffix?: string }) {
+  const [isVisible, setIsVisible] = useState(false);
+  const ref = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+        }
+      },
+      { threshold: 0.3 }
+    );
+
+    if (ref.current) {
+      observer.observe(ref.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <span
+      ref={ref}
+      className={`transition-all duration-1000 ${
+        isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+      }`}
+    >
+      {value}{suffix}
+    </span>
+  );
+}
+
+// Reveal on scroll component
+function Reveal({ children, className = "", delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
+  const [isVisible, setIsVisible] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setTimeout(() => setIsVisible(true), delay);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (ref.current) {
+      observer.observe(ref.current);
+    }
+
+    return () => observer.disconnect();
+  }, [delay]);
+
+  return (
+    <div
+      ref={ref}
+      className={`transition-all duration-700 ease-out ${
+        isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+      } ${className}`}
+    >
+      {children}
+    </div>
+  );
+}
+
+// ============================================================================
+// Semantic Search Input Component
+// ============================================================================
+
+interface SemanticSearchInputProps {
+  onSelect: (result: ProcedureSearchResult) => void;
+  placeholder?: string;
+}
+
+function SemanticSearchInput({
+  onSelect,
+  placeholder = "Describe what you need...",
+}: SemanticSearchInputProps) {
+  const [query, setQuery] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(0);
+  const [searchState, setSearchState] = useState<SearchState>({
+    isLoading: false,
+    error: null,
+    suggestions: [],
+  });
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
+
+  const debouncedQuery = useDebounce(query, 300);
+
+  useEffect(() => {
+    async function fetchSuggestions() {
+      if (!debouncedQuery || debouncedQuery.trim().length < 2) {
+        setSearchState({ isLoading: false, error: null, suggestions: [] });
+        return;
+      }
+
+      setSearchState((prev) => ({ ...prev, isLoading: true, error: null }));
+
+      try {
+        const response = await fetch(
+          `/api/procedures/search?q=${encodeURIComponent(debouncedQuery.trim())}&limit=8`
+        );
+
+        if (!response.ok) {
+          throw new Error("Search failed");
+        }
+
+        const data = await response.json();
+
+        const suggestions: ProcedureSuggestion[] = data.results.map(
+          (r: ProcedureSearchResult) => ({
+            id: r.id,
+            name: r.name,
+            category: r.category,
+            matchScore: r.score,
+            metroAvailability: r.metroAvailability,
+          })
+        );
+
+        setSearchState({
+          isLoading: false,
+          error: null,
+          suggestions,
+          searchTimeMs: data.searchTimeMs,
+        });
+
+        (window as unknown as { __searchResults: ProcedureSearchResult[] }).__searchResults = data.results;
+      } catch (err) {
+        setSearchState({
+          isLoading: false,
+          error: err instanceof Error ? err.message : "Search failed",
+          suggestions: [],
+        });
+      }
+    }
+
+    fetchSuggestions();
+  }, [debouncedQuery]);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    setHighlightedIndex(0);
+  }, [searchState.suggestions]);
+
+  useEffect(() => {
+    if (isOpen && listRef.current) {
+      const highlightedElement = listRef.current.children[highlightedIndex] as HTMLElement;
+      if (highlightedElement) {
+        highlightedElement.scrollIntoView({ block: "nearest" });
+      }
+    }
+  }, [highlightedIndex, isOpen]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newQuery = e.target.value;
+    setQuery(newQuery);
+    if (!isOpen && newQuery.length >= 2) {
+      setIsOpen(true);
+    }
+  };
+
+  const handleInputFocus = () => {
+    if (query.length >= 2) {
+      setIsOpen(true);
+    }
+  };
+
+  const handleSelect = useCallback(
+    (suggestion: ProcedureSuggestion) => {
+      const results = (window as unknown as { __searchResults: ProcedureSearchResult[] }).__searchResults || [];
+      const fullResult = results.find((r) => r.id === suggestion.id);
+
+      if (fullResult) {
+        setQuery(suggestion.name);
+        setIsOpen(false);
+        onSelect(fullResult);
+      }
+    },
+    [onSelect]
+  );
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!isOpen && searchState.suggestions.length > 0) {
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        setIsOpen(true);
+        e.preventDefault();
+        return;
+      }
+    }
+
+    if (!isOpen) return;
+
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        setHighlightedIndex((prev) =>
+          prev < searchState.suggestions.length - 1 ? prev + 1 : prev
+        );
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : 0));
+        break;
+      case "Enter":
+        e.preventDefault();
+        if (searchState.suggestions[highlightedIndex]) {
+          handleSelect(searchState.suggestions[highlightedIndex]);
+        }
+        break;
+      case "Escape":
+        e.preventDefault();
+        setIsOpen(false);
+        inputRef.current?.blur();
+        break;
+    }
+  };
+
+  const formatScore = (score: number) => {
+    return Math.round(score * 100);
   };
 
   return (
-    <div className="min-h-screen bg-[#FFFBF7] text-slate-800 overflow-x-hidden">
-      {/* Subtle grain texture overlay */}
-      <div
-        className="fixed inset-0 pointer-events-none opacity-[0.03] z-50"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-        }}
-      />
+    <div ref={containerRef} className="relative">
+      {/* Input Field */}
+      <div className={`relative transition-all duration-300 ${isOpen ? "ring-2 ring-[#1a1a1a] ring-offset-2 rounded-full" : ""}`}>
+        <div className="absolute left-6 top-1/2 -translate-y-1/2 pointer-events-none">
+          {searchState.isLoading ? (
+            <div className="w-5 h-5 border-2 border-[#1a1a1a] border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <svg
+              className="w-5 h-5 text-[#1a1a1a]/30"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+          )}
+        </div>
 
+        <input
+          ref={inputRef}
+          type="text"
+          value={query}
+          onChange={handleInputChange}
+          onFocus={handleInputFocus}
+          onKeyDown={handleKeyDown}
+          placeholder={placeholder}
+          className="w-full pl-14 pr-12 py-4 bg-white border border-[#1a1a1a]/10 rounded-full text-lg focus:outline-none transition-colors placeholder:text-[#1a1a1a]/30"
+          autoComplete="off"
+          aria-expanded={isOpen}
+          aria-haspopup="listbox"
+          role="combobox"
+        />
+
+        {query && (
+          <button
+            type="button"
+            onClick={() => {
+              setQuery("");
+              setSearchState({ isLoading: false, error: null, suggestions: [] });
+              inputRef.current?.focus();
+            }}
+            className="absolute right-6 top-1/2 -translate-y-1/2 p-1 hover:bg-[#1a1a1a]/5 rounded-full transition-colors"
+            aria-label="Clear search"
+          >
+            <svg
+              className="w-5 h-5 text-[#1a1a1a]/30 hover:text-[#1a1a1a]/60"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        )}
+      </div>
+
+      {/* Dropdown */}
+      {isOpen && (
+        <div className="absolute z-50 w-full mt-2 bg-white rounded-2xl shadow-xl border border-[#1a1a1a]/5 overflow-hidden">
+          {searchState.isLoading && query.length >= 2 && (
+            <div className="px-6 py-8 text-center">
+              <div className="w-6 h-6 border-2 border-[#1a1a1a] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+              <p className="text-sm text-[#1a1a1a]/60">Searching...</p>
+            </div>
+          )}
+
+          {searchState.error && (
+            <div className="px-6 py-8 text-center">
+              <p className="text-sm text-red-600">{searchState.error}</p>
+            </div>
+          )}
+
+          {!searchState.isLoading &&
+            !searchState.error &&
+            searchState.suggestions.length === 0 &&
+            query.length >= 2 && (
+              <div className="px-6 py-8 text-center">
+                <p className="text-[#1a1a1a]/60 text-sm">No procedures found</p>
+                <p className="text-[#1a1a1a]/40 text-xs mt-1">Try different keywords</p>
+              </div>
+            )}
+
+          {!searchState.isLoading &&
+            !searchState.error &&
+            searchState.suggestions.length > 0 && (
+              <>
+                <div className="px-5 py-3 border-b border-[#1a1a1a]/5">
+                  <p className="text-xs text-[#1a1a1a]/40">
+                    {searchState.suggestions.length} results
+                    {searchState.searchTimeMs && ` · ${searchState.searchTimeMs}ms`}
+                  </p>
+                </div>
+
+                <ul ref={listRef} role="listbox" className="max-h-80 overflow-y-auto">
+                  {searchState.suggestions.map((suggestion, index) => {
+                    const relevance = formatScore(suggestion.matchScore);
+
+                    return (
+                      <li
+                        key={suggestion.id}
+                        role="option"
+                        aria-selected={index === highlightedIndex}
+                        onClick={() => handleSelect(suggestion)}
+                        onMouseEnter={() => setHighlightedIndex(index)}
+                        className={`px-5 py-4 cursor-pointer transition-colors border-b border-[#1a1a1a]/5 last:border-0 ${
+                          index === highlightedIndex ? "bg-[#1a1a1a]/[0.03]" : ""
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-[#1a1a1a] truncate">{suggestion.name}</p>
+                            <div className="flex items-center gap-2 mt-1.5">
+                              <span className="text-xs text-[#1a1a1a]/40 capitalize">
+                                {suggestion.category}
+                              </span>
+                              <span className="text-[#1a1a1a]/20">·</span>
+                              <span className={`text-xs ${
+                                relevance >= 70 ? "text-emerald-600" : "text-[#1a1a1a]/40"
+                              }`}>
+                                {relevance}% match
+                              </span>
+                            </div>
+                          </div>
+                          {index === highlightedIndex && (
+                            <svg className="w-4 h-4 text-[#1a1a1a]/30 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+
+                <div className="px-5 py-3 bg-[#1a1a1a]/[0.02] border-t border-[#1a1a1a]/5">
+                  <p className="text-xs text-[#1a1a1a]/30 flex items-center gap-4">
+                    <span><kbd className="px-1.5 py-0.5 bg-white rounded border border-[#1a1a1a]/10 text-[10px] font-mono">↑↓</kbd> navigate</span>
+                    <span><kbd className="px-1.5 py-0.5 bg-white rounded border border-[#1a1a1a]/10 text-[10px] font-mono">↵</kbd> select</span>
+                  </p>
+                </div>
+              </>
+            )}
+
+          {!searchState.isLoading &&
+            !searchState.error &&
+            searchState.suggestions.length === 0 &&
+            query.length < 2 && (
+              <div className="px-6 py-8 text-center">
+                <p className="text-sm text-[#1a1a1a]/60">Type at least 2 characters</p>
+              </div>
+            )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================================
+// Selected Procedure Card
+// ============================================================================
+
+interface SelectedProcedureCardProps {
+  procedure: ProcedureSearchResult;
+  onClear: () => void;
+  onViewPricing: (metroSlug: string) => void;
+}
+
+function SelectedProcedureCard({
+  procedure,
+  onClear,
+  onViewPricing,
+}: SelectedProcedureCardProps) {
+  const availableMetros = procedure.metroAvailability.filter((m) => m.available);
+
+  return (
+    <div className="mt-8 p-6 bg-white/80 backdrop-blur-sm rounded-2xl border border-[#1a1a1a]/10">
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <p className="text-xs tracking-[0.15em] uppercase text-[#1a1a1a]/40 mb-2">Selected</p>
+          <h3 className="font-display text-xl text-[#1a1a1a]">{procedure.name}</h3>
+          <p className="text-sm text-[#1a1a1a]/50 mt-1 capitalize">{procedure.category}</p>
+        </div>
+        <button
+          onClick={onClear}
+          className="p-2 hover:bg-[#1a1a1a]/5 rounded-lg transition-colors"
+          aria-label="Clear selection"
+        >
+          <svg className="w-5 h-5 text-[#1a1a1a]/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      {procedure.keywords.length > 0 && (
+        <div className="mb-6">
+          <p className="text-xs text-[#1a1a1a]/40 mb-2">Related terms</p>
+          <div className="flex flex-wrap gap-2">
+            {procedure.keywords.slice(0, 4).map((keyword) => (
+              <span key={keyword} className="px-2.5 py-1 bg-[#1a1a1a]/5 text-[#1a1a1a]/60 text-xs rounded-full">
+                {keyword}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div>
+        <p className="text-xs text-[#1a1a1a]/40 mb-3">Select location to view prices</p>
+        {availableMetros.length === 0 ? (
+          <p className="text-sm text-[#1a1a1a]/50 italic">Not available in any location yet</p>
+        ) : (
+          <div className="grid gap-2">
+            {availableMetros.map((metro) => (
+              <button
+                key={metro.slug}
+                onClick={() => onViewPricing(metro.slug)}
+                className="w-full p-4 bg-[#1a1a1a] hover:bg-[#333] text-white rounded-xl text-left transition-all flex items-center justify-between group"
+              >
+                <div className="flex items-center gap-3">
+                  <svg className="w-5 h-5 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  </svg>
+                  <span className="font-medium">{metro.name}</span>
+                </div>
+                <svg className="w-4 h-4 text-white/50 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default function Home() {
+  const router = useRouter();
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [selectedProcedure, setSelectedProcedure] = useState<ProcedureSearchResult | null>(null);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const handleProcedureSelect = useCallback((result: ProcedureSearchResult) => {
+    setSelectedProcedure(result);
+  }, []);
+
+  const handleViewPricing = (metroSlug: string) => {
+    if (selectedProcedure) {
+      router.push(
+        `/results?procedure_id=${encodeURIComponent(selectedProcedure.id)}&metro_slug=${encodeURIComponent(metroSlug)}`
+      );
+    }
+  };
+
+  const handleClearSelection = () => {
+    setSelectedProcedure(null);
+  };
+
+  return (
+    <div className="min-h-screen bg-[#FAFAF8] text-[#1a1a1a] selection:bg-[#1a1a1a] selection:text-white">
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-40 bg-[#FFFBF7]/80 backdrop-blur-md border-b border-sage-200/50">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-9 h-9 bg-gradient-to-br from-sage-500 to-sage-600 rounded-xl flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
+      <nav
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+          isScrolled
+            ? "bg-[#FAFAF8]/90 backdrop-blur-md border-b border-[#1a1a1a]/5"
+            : "bg-transparent"
+        }`}
+      >
+        <div className="max-w-[1400px] mx-auto px-6 md:px-12 py-5 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-3 group">
+            <div className="w-10 h-10 bg-[#1a1a1a] rounded-full flex items-center justify-center group-hover:scale-95 transition-transform duration-300">
               <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
             </div>
-            <span className="font-display text-xl font-semibold text-slate-800">Fairward</span>
+            <span className="text-lg font-medium tracking-tight">JustPrice</span>
           </Link>
 
-          <div className="flex items-center gap-6">
-            <Link href="/query" className="text-sm font-medium text-slate-600 hover:text-sage-600 transition-colors">
-              Search Prices
-            </Link>
-            <a href="#how-it-works" className="text-sm font-medium text-slate-600 hover:text-sage-600 transition-colors">
-              How It Works
-            </a>
+          <div className="hidden md:flex items-center gap-12">
             <Link
               href="/query"
-              className="px-4 py-2 bg-coral-500 hover:bg-coral-600 text-white text-sm font-semibold rounded-full transition-all hover:shadow-lg hover:shadow-coral-500/25"
+              className="text-sm text-[#1a1a1a]/60 hover:text-[#1a1a1a] transition-colors duration-300"
             >
-              Get Started
+              Search Prices
             </Link>
+            <a
+              href="#approach"
+              className="text-sm text-[#1a1a1a]/60 hover:text-[#1a1a1a] transition-colors duration-300"
+            >
+              How It Works
+            </a>
           </div>
+
+          <Link
+            href="/query"
+            className="px-5 py-2.5 bg-[#1a1a1a] text-white text-sm font-medium rounded-full hover:bg-[#333] transition-colors duration-300"
+          >
+            Get Started
+          </Link>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20 px-6">
-        {/* Decorative elements */}
-        <div className="absolute top-20 left-10 w-72 h-72 bg-sage-300/20 rounded-full blur-3xl" />
-        <div className="absolute top-40 right-20 w-96 h-96 bg-coral-300/15 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-amber-200/20 rounded-full blur-3xl" />
-
-        <div className="relative max-w-4xl mx-auto text-center">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-sage-100 rounded-full mb-8 animate-fade-in">
-            <span className="w-2 h-2 bg-sage-500 rounded-full animate-pulse" />
-            <span className="text-sm font-medium text-sage-700">Your AI Healthcare Advocate</span>
+      <section className="pt-32 pb-20 px-6 md:px-12">
+        <div className="max-w-2xl mx-auto text-center">
+          {/* Headline */}
+          <div className="mb-6">
+            <h1 className="font-display text-4xl md:text-5xl font-normal leading-[1.15] tracking-[-0.02em] animate-fade-in-up">
+              See what healthcare
+              <br />
+              <span className="italic">actually costs.</span>
+            </h1>
           </div>
 
-          {/* Main headline */}
-          <h1 className="font-display text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.1] mb-6 animate-fade-in-up">
-            <span className="text-slate-800">Finally, someone</span>
-            <br />
-            <span className="bg-gradient-to-r from-sage-600 via-sage-500 to-coral-500 bg-clip-text text-transparent">
-              fighting for you
-            </span>
-          </h1>
+          {/* Subhead */}
+          <div className="overflow-hidden mb-10">
+            <p className="text-lg text-[#1a1a1a]/50 leading-relaxed animate-fade-in-up animation-delay-100">
+              Compare real hospital prices. Fight unfair bills.
+            </p>
+          </div>
 
-          {/* Subheadline */}
-          <p className="text-lg md:text-xl text-slate-600 max-w-2xl mx-auto mb-10 leading-relaxed animate-fade-in-up animation-delay-100">
-            Medical bills are confusing, expensive, and often wrong.
-            Fairward helps you see real prices, spot errors, and fight unfair charges.
-          </p>
+          {/* Search */}
+          <div className="animate-fade-in-up animation-delay-200">
+            <SemanticSearchInput
+              onSelect={handleProcedureSelect}
+              placeholder="Search for a procedure..."
+            />
 
-          {/* Search Bar */}
-          <form
-            onSubmit={handleSearch}
-            className="relative max-w-xl mx-auto animate-fade-in-up animation-delay-200"
-          >
-            <div className="relative group">
-              <div className="absolute -inset-1 bg-gradient-to-r from-sage-400 via-coral-400 to-sage-400 rounded-2xl blur opacity-25 group-hover:opacity-40 transition-opacity" />
-              <div className="relative flex items-center bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-sage-100">
-                <div className="pl-5">
-                  <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                </div>
-                <input
-                  type="text"
-                  placeholder="Search for a procedure (MRI, knee replacement...)"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1 px-4 py-5 bg-transparent text-slate-800 placeholder:text-slate-400 focus:outline-none text-lg"
-                />
-                <button
-                  type="submit"
-                  className="m-2 px-6 py-3 bg-gradient-to-r from-sage-500 to-sage-600 hover:from-sage-600 hover:to-sage-700 text-white font-semibold rounded-xl transition-all hover:shadow-lg hover:shadow-sage-500/30 active:scale-[0.98]"
-                >
-                  Compare Prices
-                </button>
-              </div>
-            </div>
-          </form>
+            {/* Selected Procedure Card */}
+            {selectedProcedure && (
+              <SelectedProcedureCard
+                procedure={selectedProcedure}
+                onClear={handleClearSelection}
+                onViewPricing={handleViewPricing}
+              />
+            )}
+          </div>
 
           {/* Trust indicators */}
-          <div className="flex flex-wrap items-center justify-center gap-6 mt-10 text-sm text-slate-500 animate-fade-in-up animation-delay-300">
-            <div className="flex items-center gap-2">
-              <svg className="w-4 h-4 text-sage-500" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              <span>Free to search</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <svg className="w-4 h-4 text-sage-500" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              <span>Real hospital prices</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <svg className="w-4 h-4 text-sage-500" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              <span>No account needed</span>
-            </div>
-          </div>
+          <p className="mt-8 text-xs text-[#1a1a1a]/30 animate-fade-in-up animation-delay-300">
+            Free to search · No account required · Real hospital prices
+          </p>
         </div>
       </section>
 
-      {/* Problem Statement */}
-      <section className="py-20 px-6 bg-gradient-to-b from-transparent to-sage-50/50">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid md:grid-cols-3 gap-8">
+      {/* Stats Section */}
+      <section className="py-32 px-6 md:px-12 border-t border-[#1a1a1a]/5">
+        <div className="max-w-[1400px] mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-16 md:gap-8">
             {[
               {
-                stat: "5x",
-                label: "Price difference",
-                description: "The same MRI can cost $400 at one hospital and $4,000 at another just 20 miles away"
+                number: "5",
+                suffix: "×",
+                label: "Price variance",
+                desc: "Same procedure, different hospital"
               },
               {
-                stat: "80%",
-                label: "Bills have errors",
-                description: "The average large hospital bill contains $1,300 in overcharges and mistakes"
+                number: "80",
+                suffix: "%",
+                label: "Bills with errors",
+                desc: "Average overcharge of $1,300"
               },
               {
-                stat: "#1",
+                number: "#1",
+                suffix: "",
                 label: "Cause of bankruptcy",
-                description: "Medical bills are the leading cause of personal bankruptcy in America"
+                desc: "Medical debt in America"
               }
-            ].map((item, i) => (
-              <div
-                key={i}
-                className="group relative bg-white rounded-3xl p-8 shadow-sm hover:shadow-xl transition-all duration-300 border border-sage-100/50 hover:border-sage-200"
-                style={{ animationDelay: `${i * 100}ms` }}
-              >
-                <div className="absolute top-0 left-8 w-16 h-1 bg-gradient-to-r from-coral-400 to-coral-500 rounded-b-full transform -translate-y-px" />
-                <div className="font-display text-5xl font-bold bg-gradient-to-br from-slate-800 to-slate-600 bg-clip-text text-transparent mb-2">
-                  {item.stat}
+            ].map((stat, i) => (
+              <Reveal key={i} delay={i * 100}>
+                <div className="group">
+                  <div className="font-display text-[clamp(4rem,10vw,7rem)] font-normal leading-none tracking-tight mb-4">
+                    <AnimatedNumber value={stat.number} suffix={stat.suffix} />
+                  </div>
+                  <div className="text-lg font-medium mb-2">{stat.label}</div>
+                  <div className="text-[#1a1a1a]/40 text-sm">{stat.desc}</div>
                 </div>
-                <div className="text-sage-600 font-semibold mb-3">{item.label}</div>
-                <p className="text-slate-500 text-sm leading-relaxed">{item.description}</p>
-              </div>
+              </Reveal>
             ))}
           </div>
         </div>
       </section>
 
-      {/* What Changed Section */}
-      <section className="py-20 px-6">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-amber-100 rounded-full mb-6">
-            <svg className="w-4 h-4 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-            </svg>
-            <span className="text-sm font-medium text-amber-700">A new law changed everything</span>
+      {/* Context Section */}
+      <section className="py-32 px-6 md:px-12">
+        <div className="max-w-[1400px] mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-32 items-start">
+            <Reveal>
+              <div className="lg:sticky lg:top-32">
+                <p className="text-sm tracking-[0.2em] uppercase text-[#1a1a1a]/40 mb-6">
+                  The Problem
+                </p>
+                <h2 className="font-display text-4xl md:text-5xl font-normal leading-[1.1] tracking-tight">
+                  Hospitals must publish prices.
+                  <span className="text-[#1a1a1a]/30"> They made it impossible to find.</span>
+                </h2>
+              </div>
+            </Reveal>
+
+            <div className="space-y-8">
+              <Reveal delay={100}>
+                <p className="text-lg text-[#1a1a1a]/60 leading-relaxed">
+                  Since 2021, federal law requires every hospital to publish their prices online.
+                  But they&apos;ve buried the data in incompatible formats, broken links, and
+                  spreadsheets designed to confuse.
+                </p>
+              </Reveal>
+              <Reveal delay={200}>
+                <p className="text-lg text-[#1a1a1a]/60 leading-relaxed">
+                  The same MRI costs $400 at one hospital and $4,000 at another just 20 miles away.
+                  The information is technically public but practically invisible.
+                </p>
+              </Reveal>
+              <Reveal delay={300}>
+                <p className="text-xl font-medium">
+                  JustPrice makes it accessible.
+                </p>
+              </Reveal>
+            </div>
           </div>
-          <h2 className="font-display text-3xl md:text-4xl font-bold text-slate-800 mb-6">
-            Hospitals must now publish their prices.
-            <br />
-            <span className="text-sage-600">They just made it impossible to find.</span>
-          </h2>
-          <p className="text-lg text-slate-600 leading-relaxed mb-8">
-            Since 2021, federal law requires every hospital to publish their prices online.
-            But they&apos;ve buried the data in incompatible formats, broken links, and confusing spreadsheets.
-            The information is technically public but practically invisible.
-          </p>
-          <p className="text-xl font-display font-semibold text-coral-600">
-            Fairward makes it accessible.
-          </p>
         </div>
       </section>
 
-      {/* How It Works */}
-      <section id="how-it-works" className="py-20 px-6 bg-slate-800 text-white relative overflow-hidden">
-        {/* Background decoration */}
-        <div className="absolute top-0 left-0 w-full h-full">
-          <div className="absolute top-20 left-10 w-96 h-96 bg-sage-500/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-20 right-10 w-72 h-72 bg-coral-500/10 rounded-full blur-3xl" />
-        </div>
+      {/* Approach Section */}
+      <section id="approach" className="py-32 px-6 md:px-12 bg-[#1a1a1a] text-white">
+        <div className="max-w-[1400px] mx-auto">
+          <Reveal>
+            <div className="mb-24">
+              <p className="text-sm tracking-[0.2em] uppercase text-white/40 mb-6">
+                Our Approach
+              </p>
+              <h2 className="font-display text-4xl md:text-5xl font-normal leading-[1.1] tracking-tight max-w-2xl">
+                With you at every step of your healthcare journey
+              </h2>
+            </div>
+          </Reveal>
 
-        <div className="relative max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">
-              How Fairward helps you
-            </h2>
-            <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-              From researching prices to fighting your bill, we&apos;re with you every step of the way
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-white/10">
             {[
               {
-                icon: (
-                  <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                ),
-                phase: "Before care",
+                num: "01",
+                phase: "Before Care",
                 title: "Know your options",
-                description: "Search any procedure. See what every hospital actually charges your insurance. Know when you're being quoted 3x the fair price.",
-                color: "sage"
+                desc: "Search any procedure. See what every hospital actually charges. Know when you're being quoted 3× the fair price."
               },
               {
-                icon: (
-                  <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                ),
-                phase: "Before you commit",
+                num: "02",
+                phase: "Before You Commit",
                 title: "Confirm in writing",
-                description: "Fairward contacts providers to confirm prices, request cash-pay alternatives, and find cheaper options nearby.",
-                color: "amber"
+                desc: "We contact providers to confirm prices, request cash-pay alternatives, and find more affordable options nearby."
               },
               {
-                icon: (
-                  <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                ),
-                phase: "After care",
+                num: "03",
+                phase: "After Care",
                 title: "Fight unfair bills",
-                description: "Upload your bill. We detect errors, identify overcharges, and negotiate with billing departments on your behalf.",
-                color: "coral"
+                desc: "Upload your bill. We detect errors, identify overcharges, and negotiate with billing departments on your behalf."
               }
-            ].map((item, i) => (
-              <div
-                key={i}
-                className="group relative"
-              >
-                {/* Connector line for larger screens */}
-                {i < 2 && (
-                  <div className="hidden md:block absolute top-12 left-[calc(50%+60px)] w-[calc(100%-60px)] h-px bg-gradient-to-r from-slate-600 to-transparent" />
-                )}
-
-                <div className="relative bg-slate-700/50 backdrop-blur rounded-3xl p-8 border border-slate-600/50 hover:border-slate-500/50 transition-all hover:bg-slate-700/70">
-                  {/* Step number */}
-                  <div className="absolute -top-3 -left-3 w-8 h-8 bg-slate-800 border-2 border-slate-600 rounded-full flex items-center justify-center text-sm font-bold text-slate-400">
-                    {i + 1}
+            ].map((step, i) => (
+              <Reveal key={i} delay={i * 150}>
+                <div className="bg-[#1a1a1a] p-8 md:p-12 h-full">
+                  <div className="flex items-baseline gap-4 mb-8">
+                    <span className="text-sm text-white/30 font-mono">{step.num}</span>
+                    <span className="text-sm text-white/50">{step.phase}</span>
                   </div>
-
-                  {/* Icon */}
-                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-5 ${
-                    item.color === 'sage' ? 'bg-sage-500/20 text-sage-400' :
-                    item.color === 'amber' ? 'bg-amber-500/20 text-amber-400' :
-                    'bg-coral-500/20 text-coral-400'
-                  }`}>
-                    {item.icon}
-                  </div>
-
-                  <div className={`text-sm font-medium mb-2 ${
-                    item.color === 'sage' ? 'text-sage-400' :
-                    item.color === 'amber' ? 'text-amber-400' :
-                    'text-coral-400'
-                  }`}>
-                    {item.phase}
-                  </div>
-                  <h3 className="font-display text-xl font-bold mb-3">{item.title}</h3>
-                  <p className="text-slate-400 text-sm leading-relaxed">{item.description}</p>
+                  <h3 className="font-display text-2xl md:text-3xl font-normal mb-6">
+                    {step.title}
+                  </h3>
+                  <p className="text-white/50 leading-relaxed">
+                    {step.desc}
+                  </p>
                 </div>
-              </div>
+              </Reveal>
             ))}
           </div>
         </div>
       </section>
 
       {/* Social Proof */}
-      <section className="py-20 px-6">
-        <div className="max-w-4xl mx-auto">
-          <div className="relative bg-gradient-to-br from-sage-500 to-sage-600 rounded-3xl p-10 md:p-14 text-white overflow-hidden">
-            {/* Decorative circles */}
-            <div className="absolute -top-20 -right-20 w-64 h-64 bg-white/10 rounded-full" />
-            <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-white/10 rounded-full" />
-
-            <div className="relative text-center">
-              <div className="font-display text-6xl md:text-7xl font-bold mb-4">74%</div>
-              <p className="text-xl md:text-2xl font-medium mb-6 text-sage-100">
-                of people who challenge a medical bill get it reduced or corrected
+      <section className="py-32 px-6 md:px-12">
+        <div className="max-w-[1400px] mx-auto">
+          <div className="max-w-4xl mx-auto text-center">
+            <Reveal>
+              <div className="font-display text-[clamp(5rem,15vw,12rem)] font-normal leading-none tracking-tight mb-8">
+                <AnimatedNumber value="74" suffix="%" />
+              </div>
+            </Reveal>
+            <Reveal delay={100}>
+              <p className="text-2xl md:text-3xl font-display leading-snug mb-8">
+                of people who challenge a medical bill
+                <br />
+                <span className="text-[#1a1a1a]/40">get it reduced or corrected</span>
               </p>
-              <p className="text-sage-200 max-w-xl mx-auto">
-                The problem isn&apos;t that bills can&apos;t be fought—it&apos;s that most people don&apos;t have the time, knowledge, or energy to fight. That&apos;s where we come in.
+            </Reveal>
+            <Reveal delay={200}>
+              <p className="text-lg text-[#1a1a1a]/50 max-w-xl mx-auto">
+                The problem isn&apos;t that bills can&apos;t be fought—it&apos;s that most people don&apos;t have the time, knowledge, or energy to fight.
               </p>
-            </div>
+            </Reveal>
           </div>
         </div>
       </section>
 
-      {/* Why It Works */}
-      <section className="py-20 px-6 bg-sage-50/50">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="font-display text-3xl md:text-4xl font-bold text-slate-800 mb-6">
-                Every bill we fight makes us smarter
-              </h2>
-              <p className="text-lg text-slate-600 mb-6 leading-relaxed">
-                Every bill we review teaches us which hospitals negotiate, which insurers approve appeals, and what tactics work. This intelligence compounds over time into an advantage no one else has.
-              </p>
-              <ul className="space-y-4">
-                {[
-                  "Pattern recognition across thousands of bills",
-                  "Real-time database of negotiation outcomes",
-                  "AI that learns what arguments actually work"
-                ].map((item, i) => (
-                  <li key={i} className="flex items-start gap-3">
-                    <div className="mt-1 w-5 h-5 bg-sage-500 rounded-full flex items-center justify-center flex-shrink-0">
-                      <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                    <span className="text-slate-700">{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+      {/* Intelligence Section */}
+      <section className="py-32 px-6 md:px-12 border-t border-[#1a1a1a]/5">
+        <div className="max-w-[1400px] mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-32">
+            <Reveal>
+              <div>
+                <p className="text-sm tracking-[0.2em] uppercase text-[#1a1a1a]/40 mb-6">
+                  Compounding Intelligence
+                </p>
+                <h2 className="font-display text-4xl md:text-5xl font-normal leading-[1.1] tracking-tight mb-8">
+                  Every bill we fight makes us smarter
+                </h2>
+                <p className="text-lg text-[#1a1a1a]/60 leading-relaxed mb-12">
+                  Every bill we review teaches us which hospitals negotiate, which insurers
+                  approve appeals, and what tactics work. This intelligence compounds into
+                  an advantage no one else has.
+                </p>
 
-            <div className="relative">
-              {/* Visual representation of learning */}
-              <div className="relative bg-white rounded-3xl p-8 shadow-xl shadow-sage-200/50 border border-sage-100">
-                <div className="space-y-4">
+                <div className="space-y-6">
                   {[
-                    { hospital: "Memorial General", saved: "$2,340", status: "success" },
-                    { hospital: "St. Mary's Medical", saved: "$890", status: "success" },
-                    { hospital: "University Health", saved: "$4,120", status: "success" },
+                    "Pattern recognition across thousands of bills",
+                    "Real-time database of negotiation outcomes",
+                    "AI that learns what arguments actually work"
+                  ].map((item, i) => (
+                    <Reveal key={i} delay={i * 100}>
+                      <div className="flex items-center gap-4">
+                        <div className="w-1.5 h-1.5 bg-[#1a1a1a] rounded-full" />
+                        <span className="text-base">{item}</span>
+                      </div>
+                    </Reveal>
+                  ))}
+                </div>
+              </div>
+            </Reveal>
+
+            <Reveal delay={200}>
+              <div className="bg-[#F5F5F3] rounded-2xl p-8 md:p-12">
+                <div className="space-y-4 mb-8">
+                  {[
+                    { name: "Memorial General", amount: "$2,340" },
+                    { name: "St. Mary's Medical", amount: "$890" },
+                    { name: "University Health", amount: "$4,120" }
                   ].map((item, i) => (
                     <div
                       key={i}
-                      className="flex items-center justify-between p-4 bg-sage-50 rounded-xl"
-                      style={{ animationDelay: `${i * 150}ms` }}
+                      className="flex items-center justify-between py-4 border-b border-[#1a1a1a]/5 last:border-0"
                     >
                       <div>
-                        <div className="font-medium text-slate-800">{item.hospital}</div>
-                        <div className="text-sm text-slate-500">Bill reduced</div>
+                        <div className="font-medium text-sm">{item.name}</div>
+                        <div className="text-xs text-[#1a1a1a]/40 mt-0.5">Bill reduced</div>
                       </div>
                       <div className="text-right">
-                        <div className="font-display font-bold text-sage-600">{item.saved}</div>
-                        <div className="text-xs text-sage-500">saved</div>
+                        <div className="font-display text-xl">{item.amount}</div>
+                        <div className="text-xs text-[#1a1a1a]/40 mt-0.5">saved</div>
                       </div>
                     </div>
                   ))}
                 </div>
-                <div className="mt-6 pt-6 border-t border-sage-100 text-center">
-                  <div className="text-sm text-slate-500">Learning from every outcome</div>
-                  <div className="flex items-center justify-center gap-1 mt-2">
-                    {[...Array(5)].map((_, i) => (
+
+                <div className="flex items-center justify-center gap-2 pt-4 border-t border-[#1a1a1a]/5">
+                  <span className="text-xs text-[#1a1a1a]/40">Learning from every outcome</span>
+                  <div className="flex gap-1">
+                    {[...Array(3)].map((_, i) => (
                       <div
                         key={i}
-                        className="w-2 h-2 bg-sage-400 rounded-full animate-pulse"
+                        className="w-1 h-1 bg-[#1a1a1a]/20 rounded-full animate-pulse"
                         style={{ animationDelay: `${i * 200}ms` }}
                       />
                     ))}
                   </div>
                 </div>
               </div>
-            </div>
+            </Reveal>
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-24 px-6">
-        <div className="max-w-3xl mx-auto text-center">
-          <h2 className="font-display text-4xl md:text-5xl font-bold text-slate-800 mb-6">
-            Stop overpaying for healthcare
-          </h2>
-          <p className="text-xl text-slate-600 mb-10">
-            Start with a simple search. See what your procedure should actually cost.
-          </p>
-          <Link
-            href="/query"
-            className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-coral-500 to-coral-600 hover:from-coral-600 hover:to-coral-700 text-white text-lg font-semibold rounded-full transition-all hover:shadow-xl hover:shadow-coral-500/30 active:scale-[0.98] group"
-          >
-            <span>Search Procedure Prices</span>
-            <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-            </svg>
-          </Link>
-
-          <p className="mt-8 text-sm text-slate-500">
-            Free to search · No account required · Real hospital prices
-          </p>
+      <section className="py-32 px-6 md:px-12">
+        <div className="max-w-[1400px] mx-auto">
+          <div className="max-w-3xl mx-auto text-center">
+            <Reveal>
+              <h2 className="font-display text-4xl md:text-6xl font-normal leading-[1.1] tracking-tight mb-8">
+                Stop overpaying
+                <br />
+                <span className="italic">for healthcare</span>
+              </h2>
+            </Reveal>
+            <Reveal delay={100}>
+              <p className="text-xl text-[#1a1a1a]/50 mb-12">
+                Start with a simple search. See what your procedure should actually cost.
+              </p>
+            </Reveal>
+            <Reveal delay={200}>
+              <Link
+                href="/query"
+                className="inline-flex items-center gap-3 px-10 py-5 bg-[#1a1a1a] text-white text-lg font-medium rounded-full hover:bg-[#333] transition-all duration-300 hover:shadow-xl hover:shadow-[#1a1a1a]/10 active:scale-[0.98] group"
+              >
+                <span>Search Procedure Prices</span>
+                <svg
+                  className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </Link>
+            </Reveal>
+            <Reveal delay={300}>
+              <p className="mt-10 text-sm text-[#1a1a1a]/40">
+                Free to search · No account required · Real hospital prices
+              </p>
+            </Reveal>
+          </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="py-12 px-6 border-t border-sage-100">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-sage-500 to-sage-600 rounded-lg flex items-center justify-center">
+      <footer className="py-12 px-6 md:px-12 border-t border-[#1a1a1a]/5">
+        <div className="max-w-[1400px] mx-auto">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-[#1a1a1a] rounded-full flex items-center justify-center">
                 <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
               </div>
-              <span className="font-display font-semibold text-slate-800">Fairward</span>
+              <span className="font-medium">JustPrice</span>
             </div>
 
-            <p className="text-sm text-slate-500">
-              Fairward fights for you.
+            <p className="text-sm text-[#1a1a1a]/40 italic">
+              Know before you owe.
             </p>
 
-            <div className="flex items-center gap-6 text-sm text-slate-500">
-              <a href="#" className="hover:text-sage-600 transition-colors">Privacy</a>
-              <a href="#" className="hover:text-sage-600 transition-colors">Terms</a>
-              <a href="#" className="hover:text-sage-600 transition-colors">Contact</a>
+            <div className="flex items-center gap-8 text-sm text-[#1a1a1a]/40">
+              <a href="#" className="hover:text-[#1a1a1a] transition-colors duration-300">Privacy</a>
+              <a href="#" className="hover:text-[#1a1a1a] transition-colors duration-300">Terms</a>
+              <a href="#" className="hover:text-[#1a1a1a] transition-colors duration-300">Contact</a>
             </div>
           </div>
         </div>

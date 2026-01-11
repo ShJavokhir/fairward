@@ -13,11 +13,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Fairward - Your AI Healthcare Advocate",
-  description: "Compare hospital prices, spot billing errors, and fight unfair medical charges. Fairward helps you navigate healthcare costs with confidence.",
+  title: "JustPrice - Your AI Healthcare Advocate",
+  description: "Compare hospital prices, spot billing errors, and fight unfair medical charges. JustPrice helps you navigate healthcare costs with confidence.",
   keywords: ["healthcare", "medical bills", "hospital prices", "billing errors", "healthcare costs", "price comparison"],
   openGraph: {
-    title: "Fairward - Your AI Healthcare Advocate",
+    title: "JustPrice - Your AI Healthcare Advocate",
     description: "Compare hospital prices, spot billing errors, and fight unfair medical charges.",
     type: "website",
   },

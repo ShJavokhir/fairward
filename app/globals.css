@@ -1,82 +1,46 @@
 /* Custom fonts - must be first */
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');
 
 @import "tailwindcss";
 
 :root {
-  --background: #FFFBF7;
-  --foreground: #1e293b;
-
-  /* Sage green palette */
-  --sage-50: #f4f7f4;
-  --sage-100: #e4ebe4;
-  --sage-200: #c9d7c9;
-  --sage-300: #a3bba3;
-  --sage-400: #779977;
-  --sage-500: #5a7f5a;
-  --sage-600: #466646;
-  --sage-700: #3a523a;
-  --sage-800: #314331;
-  --sage-900: #2a382a;
-
-  /* Coral palette */
-  --coral-50: #fff5f3;
-  --coral-100: #ffe8e3;
-  --coral-200: #ffd5cc;
-  --coral-300: #ffb5a6;
-  --coral-400: #ff8b73;
-  --coral-500: #f56b4a;
-  --coral-600: #e24d2c;
-  --coral-700: #be3d21;
-  --coral-800: #9d351f;
-  --coral-900: #823220;
+  --background: #FAFAF8;
+  --foreground: #1a1a1a;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: 'DM Sans', var(--font-geist-sans), system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono);
-  --font-display: 'Fraunces', Georgia, serif;
+  --font-sans: 'DM Sans', system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, monospace;
+  --font-display: 'Instrument Serif', Georgia, serif;
+}
 
-  /* Sage colors */
-  --color-sage-50: var(--sage-50);
-  --color-sage-100: var(--sage-100);
-  --color-sage-200: var(--sage-200);
-  --color-sage-300: var(--sage-300);
-  --color-sage-400: var(--sage-400);
-  --color-sage-500: var(--sage-500);
-  --color-sage-600: var(--sage-600);
-  --color-sage-700: var(--sage-700);
-  --color-sage-800: var(--sage-800);
-  --color-sage-900: var(--sage-900);
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
 
-  /* Coral colors */
-  --color-coral-50: var(--coral-50);
-  --color-coral-100: var(--coral-100);
-  --color-coral-200: var(--coral-200);
-  --color-coral-300: var(--coral-300);
-  --color-coral-400: var(--coral-400);
-  --color-coral-500: var(--coral-500);
-  --color-coral-600: var(--coral-600);
-  --color-coral-700: var(--coral-700);
-  --color-coral-800: var(--coral-800);
-  --color-coral-900: var(--coral-900);
+html {
+  scroll-behavior: smooth;
+  overflow-y: scroll;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: 'DM Sans', system-ui, sans-serif;
+  font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
 }
 
 /* Display font utility */
 .font-display {
-  font-family: 'Fraunces', Georgia, serif;
-  font-optical-sizing: auto;
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-weight: 400;
 }
 
-/* Animations */
+/* Refined animations */
 @keyframes fade-in {
   from {
     opacity: 0;
@@ -89,7 +53,7 @@ body {
 @keyframes fade-in-up {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(24px);
   }
   to {
     opacity: 1;
@@ -97,98 +61,132 @@ body {
   }
 }
 
-@keyframes float {
+@keyframes subtle-float {
   0%, 100% {
-    transform: translateY(0px);
+    transform: translateY(0);
   }
   50% {
-    transform: translateY(-10px);
-  }
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
+    transform: translateY(-6px);
   }
 }
 
 .animate-fade-in {
-  animation: fade-in 0.6s ease-out forwards;
+  animation: fade-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .animate-fade-in-up {
-  animation: fade-in-up 0.6s ease-out forwards;
+  animation: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .animate-float {
-  animation: float 6s ease-in-out infinite;
+  animation: subtle-float 6s ease-in-out infinite;
 }
 
-.animate-shimmer {
-  animation: shimmer 2s linear infinite;
-  background-size: 200% 100%;
-}
-
-/* Animation delays */
+/* Animation delays - staggered reveals */
 .animation-delay-100 {
   animation-delay: 100ms;
+  opacity: 0;
 }
 
 .animation-delay-200 {
   animation-delay: 200ms;
+  opacity: 0;
 }
 
 .animation-delay-300 {
   animation-delay: 300ms;
+  opacity: 0;
 }
 
 .animation-delay-400 {
   animation-delay: 400ms;
+  opacity: 0;
 }
 
 .animation-delay-500 {
   animation-delay: 500ms;
+  opacity: 0;
 }
 
-/* Smooth scrolling */
-html {
-  scroll-behavior: smooth;
-}
-
-/* Custom scrollbar */
+/* Premium scrollbar */
 ::-webkit-scrollbar {
-  width: 10px;
+  width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--sage-50);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--sage-300);
-  border-radius: 5px;
+  background: rgba(26, 26, 26, 0.15);
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--sage-400);
+  background: rgba(26, 26, 26, 0.25);
 }
 
-/* Selection color */
-::selection {
-  background: var(--sage-200);
-  color: var(--sage-900);
-}
-
-/* Focus styles */
+/* Focus states */
 :focus-visible {
-  outline: 2px solid var(--sage-500);
+  outline: 2px solid rgba(26, 26, 26, 0.5);
   outline-offset: 2px;
 }
 
-/* Prevent layout shift on scrollbar */
-html {
-  overflow-y: scroll;
+/* Link underline animation */
+.link-underline {
+  position: relative;
+  text-decoration: none;
+}
+
+.link-underline::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 0;
+  height: 1px;
+  background: currentColor;
+  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.link-underline:hover::after {
+  width: 100%;
+}
+
+/* Smooth image loading */
+img {
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+img[src] {
+  opacity: 1;
+}
+
+/* Better text rendering for large type */
+h1, h2, h3, .font-display {
+  text-rendering: optimizeLegibility;
+  letter-spacing: -0.02em;
+}
+
+/* Responsive typography scale */
+@media (max-width: 640px) {
+  html {
+    font-size: 15px;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
 }

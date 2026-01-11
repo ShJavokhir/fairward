@@ -27,7 +27,7 @@ Guidelines:
 - Be empathetic - healthcare costs are stressful for people`;
 
   const result = streamText({
-    model: fireworks("accounts/fireworks/models/llama-v3p1-70b-instruct"),
+    model: fireworks("accounts/fireworks/models/deepseek-v3p1"),
     system: systemPrompt,
     messages,
   });

@@ -471,7 +471,7 @@ ${providerSummaries}`;
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
             </div>
-            <h2 className="font-display text-2xl text-[#0F2E2E] mb-2">Unable to Load Pricing</h2>
+            <h2 className="text-2xl font-semibold text-[#0F2E2E] mb-2">Unable to Load Pricing</h2>
             <p className="text-[#5F7A7A] mb-6">{error}</p>
             <button
               onClick={() => router.push("/query")}
@@ -493,7 +493,7 @@ ${providerSummaries}`;
                 </svg>
                 Price Comparison
               </span>
-              <h1 className="font-display text-3xl md:text-4xl font-normal leading-[1.1] tracking-tight text-[#0F2E2E] mb-2">
+              <h1 className="text-3xl md:text-4xl font-semibold leading-[1.1] tracking-tight text-[#0F2E2E] mb-2">
                 {formatProcedureName(procedureName)}
               </h1>
               <p className="text-[#5F7A7A]">
@@ -507,20 +507,20 @@ ${providerSummaries}`;
                 <div className="grid grid-cols-3 gap-6 mb-6">
                   <div>
                     <p className="text-xs text-[#5F7A7A] mb-1">Lowest</p>
-                    <p className="font-display text-2xl md:text-3xl text-[#22C55E] tabular-nums">{formatCurrency(priceRange.min)}</p>
+                    <p className="text-2xl md:text-3xl font-semibold text-[#22C55E] tabular-nums">{formatCurrency(priceRange.min)}</p>
                   </div>
                   <div className="text-center">
                     <p className="text-xs text-[#5F7A7A] mb-1">Average</p>
-                    <p className="font-display text-2xl md:text-3xl text-[#0F2E2E] tabular-nums">{formatCurrency(priceRange.avg)}</p>
+                    <p className="text-2xl md:text-3xl font-semibold text-[#0F2E2E] tabular-nums">{formatCurrency(priceRange.avg)}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-xs text-[#5F7A7A] mb-1">Highest</p>
-                    <p className="font-display text-2xl md:text-3xl text-[#0F2E2E]/40 tabular-nums">{formatCurrency(priceRange.max)}</p>
+                    <p className="text-2xl md:text-3xl font-semibold text-[#0F2E2E]/40 tabular-nums">{formatCurrency(priceRange.max)}</p>
                   </div>
                 </div>
                 <div className="pt-4 border-t border-[#0F2E2E]/5 flex items-center justify-between">
                   <span className="text-sm text-[#5F7A7A]">Potential savings</span>
-                  <span className="font-display text-xl text-[#22C55E] tabular-nums">
+                  <span className="text-xl font-semibold text-[#22C55E] tabular-nums">
                     {formatCurrency(priceRange.max - priceRange.min)}
                   </span>
                 </div>
@@ -704,7 +704,7 @@ ${providerSummaries}`;
                           </div>
                           <div className="flex items-center gap-4 ml-4">
                             <div className="text-right">
-                              <p className={`font-display text-2xl tabular-nums ${isLowestPrice ? "text-[#22C55E]" : "text-[#0F2E2E]"}`}>
+                              <p className={`text-2xl font-semibold tabular-nums ${isLowestPrice ? "text-[#22C55E]" : "text-[#0F2E2E]"}`}>
                                 {formatCurrency(provider.totalCost)}
                               </p>
                             </div>
@@ -726,7 +726,7 @@ ${providerSummaries}`;
                             <div className="mb-6 p-4 bg-white rounded-xl border border-[#0F2E2E]/5">
                               <div className="flex items-center justify-between mb-2">
                                 <span className="text-sm text-[#5F7A7A]">Data Coverage</span>
-                                <span className="font-display text-lg text-[#0F2E2E]">{provider.coverage.score}%</span>
+                                <span className="text-lg font-semibold text-[#0F2E2E]">{provider.coverage.score}%</span>
                               </div>
                               <div className="w-full bg-[#E8F5F0] rounded-full h-2">
                                 <div
@@ -757,7 +757,7 @@ ${providerSummaries}`;
                                           </span>
                                           <span className="text-sm font-medium text-[#0F2E2E]">{stepDescription}</span>
                                         </div>
-                                        <span className="font-display text-[#0F2E2E] tabular-nums">{formatCurrency(stepTotal)}</span>
+                                        <span className="font-semibold text-[#0F2E2E] tabular-nums">{formatCurrency(stepTotal)}</span>
                                       </div>
 
                                       <div className="divide-y divide-[#0F2E2E]/5">

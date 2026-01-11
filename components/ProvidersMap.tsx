@@ -367,7 +367,7 @@ export default function ProvidersMap({
               <p className="text-xs text-[#1a1a1a]/50 mb-2">
                 {cleanAddress(popupInfo.address)}
               </p>
-              <p className="font-display text-lg text-[#1a1a1a] mb-3">
+              <p className="text-lg font-semibold text-[#1a1a1a] mb-3">
                 {formatCurrency(popupInfo.totalCost)}
               </p>
               {onRequestQuote && (

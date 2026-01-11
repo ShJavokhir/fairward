@@ -438,7 +438,7 @@ function SelectedProcedureCard({
       <div className="flex items-start justify-between mb-6">
         <div>
           <span className="badge badge-accent mb-2">Selected</span>
-          <h3 className="font-display text-xl text-[#0F2E2E]">{procedure.name}</h3>
+          <h3 className="text-xl font-semibold text-[#0F2E2E]">{procedure.name}</h3>
           <p className="text-sm text-[#5F7A7A] mt-1 capitalize">{procedure.category}</p>
         </div>
         <button
@@ -550,7 +550,7 @@ export default function QueryPage() {
             </svg>
             Price Search
           </span>
-          <h1 className="font-display text-4xl md:text-5xl font-normal leading-[1.1] tracking-tight text-[#0F2E2E] mb-4">
+          <h1 className="text-4xl md:text-5xl font-semibold leading-[1.1] tracking-tight text-[#0F2E2E] mb-4">
             Find your procedure
           </h1>
           <p className="text-lg text-[#5F7A7A]">

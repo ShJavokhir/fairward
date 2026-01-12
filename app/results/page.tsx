@@ -5,15 +5,16 @@ import { Suspense, useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import OutreachModal from "@/components/OutreachModal";
 import { ChatPanel } from "@/components/ChatPanel";
+import { cn } from "@/lib/utils";
 import dynamic from "next/dynamic";
 
 const ProvidersMap = dynamic(() => import("@/components/ProvidersMap"), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-80 bg-[#F2FAF7] rounded-2xl flex items-center justify-center">
+    <div className="w-full h-80 bg-[#F7F7F5] rounded-2xl flex items-center justify-center border border-[#E5E5E5]">
       <div className="flex flex-col items-center gap-3">
-        <div className="w-6 h-6 border-2 border-[#0A4D4D] border-t-transparent rounded-full animate-spin" />
-        <p className="text-sm text-[#5F7A7A]">Loading map...</p>
+        <div className="size-6 border-2 border-[#0096C7] border-t-transparent rounded-full animate-spin" />
+        <p className="text-sm text-[#6B6B6B]">Loading map...</p>
       </div>
     </div>
   ),
@@ -194,7 +195,6 @@ function ResultsContent() {
       setShowShareToast(true);
       setTimeout(() => setShowShareToast(false), 2000);
     } catch {
-      // Fallback for older browsers
       const textArea = document.createElement("textarea");
       textArea.value = url;
       document.body.appendChild(textArea);
@@ -269,7 +269,6 @@ function ResultsContent() {
   }, [mainSteps]);
 
   const filteredAndSortedProviders = useMemo(() => {
-    // Apply filters
     let filtered = [...providers];
 
     if (maxPrice !== null) {
@@ -283,7 +282,6 @@ function ResultsContent() {
       });
     }
 
-    // Sort
     switch (sortBy) {
       case "price_low":
         filtered.sort((a, b) => a.totalCost - b.totalCost);
@@ -301,7 +299,6 @@ function ResultsContent() {
     return filtered;
   }, [providers, sortBy, maxPrice, verifiedOnly]);
 
-  // Keep sortedProviders as alias for backward compatibility
   const sortedProviders = filteredAndSortedProviders;
 
   const priceRange = providers.length > 0 ? {
@@ -359,9 +356,9 @@ ${providerSummaries}`;
   };
 
   return (
-    <div className="min-h-screen bg-[#FDFCFA]">
+    <div className="min-h-dvh bg-[#F7F7F5]">
       {/* Navigation */}
-      <nav className="border-b border-[#0F2E2E]/5 bg-white/80 backdrop-blur-sm sticky top-0 z-40">
+      <nav className="border-b border-[#E5E5E5] bg-white">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/" className="group">
             <img
@@ -374,18 +371,18 @@ ${providerSummaries}`;
           <div className="flex items-center gap-4">
             <button
               onClick={handleShare}
-              className="flex items-center gap-2 text-sm text-[#5F7A7A] hover:text-[#0A4D4D] transition-colors font-medium"
+              className="flex items-center gap-2 text-sm text-[#6B6B6B] hover:text-[#1A1A1A] transition-colors font-medium"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
               </svg>
               <span>Share</span>
             </button>
             <button
               onClick={() => router.push("/query")}
-              className="flex items-center gap-2 text-sm text-[#5F7A7A] hover:text-[#0A4D4D] transition-colors font-medium"
+              className="flex items-center gap-2 text-sm text-[#6B6B6B] hover:text-[#1A1A1A] transition-colors font-medium"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
               <span>New Search</span>
@@ -398,64 +395,64 @@ ${providerSummaries}`;
       <main className="max-w-7xl mx-auto px-6 py-8 md:py-12">
         {/* Loading State - Skeleton */}
         {isLoading && (
-          <div className="animate-pulse">
+          <div>
             {/* Header Skeleton */}
             <div className="mb-8">
-              <div className="h-6 w-32 bg-[#E8F5F0] rounded-full mb-4" />
-              <div className="h-10 w-80 bg-[#E8F5F0] rounded-lg mb-2" />
-              <div className="h-5 w-48 bg-[#F5F5F3] rounded-lg" />
+              <div className="skeleton h-6 w-32 mb-4" />
+              <div className="skeleton h-10 w-80 mb-2" />
+              <div className="skeleton h-5 w-48" />
             </div>
 
             {/* Price Range Skeleton */}
-            <div className="mb-8 p-6 bg-white rounded-2xl border border-[#0F2E2E]/5">
+            <div className="mb-8 p-6 bg-white rounded-2xl border border-[#E5E5E5]">
               <div className="grid grid-cols-3 gap-6 mb-6">
                 <div>
-                  <div className="h-3 w-12 bg-[#F5F5F3] rounded mb-2" />
-                  <div className="h-9 w-24 bg-[#E8F5F0] rounded-lg" />
+                  <div className="skeleton h-3 w-12 mb-2" />
+                  <div className="skeleton h-9 w-24" />
                 </div>
                 <div className="text-center">
-                  <div className="h-3 w-12 bg-[#F5F5F3] rounded mb-2 mx-auto" />
-                  <div className="h-9 w-24 bg-[#F5F5F3] rounded-lg mx-auto" />
+                  <div className="skeleton h-3 w-12 mb-2 mx-auto" />
+                  <div className="skeleton h-9 w-24 mx-auto" />
                 </div>
                 <div className="text-right">
-                  <div className="h-3 w-12 bg-[#F5F5F3] rounded mb-2 ml-auto" />
-                  <div className="h-9 w-24 bg-[#F5F5F3] rounded-lg ml-auto" />
+                  <div className="skeleton h-3 w-12 mb-2 ml-auto" />
+                  <div className="skeleton h-9 w-24 ml-auto" />
                 </div>
               </div>
-              <div className="pt-4 border-t border-[#0F2E2E]/5 flex items-center justify-between">
-                <div className="h-4 w-28 bg-[#F5F5F3] rounded" />
-                <div className="h-6 w-20 bg-[#E8F5F0] rounded-lg" />
+              <div className="pt-4 border-t border-[#F0F0F0] flex items-center justify-between">
+                <div className="skeleton h-4 w-28" />
+                <div className="skeleton h-6 w-20" />
               </div>
             </div>
 
             {/* Two Column Layout */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Left Column: Provider Cards Skeleton */}
+              {/* Provider Cards Skeleton */}
               <div className="space-y-3">
                 {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="bg-white rounded-2xl border border-[#0F2E2E]/5 p-5 md:p-6">
+                  <div key={i} className="bg-white rounded-2xl border border-[#E5E5E5] p-5 md:p-6">
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-[#F2FAF7] rounded-xl" />
+                      <div className="skeleton size-12 rounded-xl" />
                       <div className="flex-1">
-                        <div className="h-5 w-48 bg-[#F5F5F3] rounded mb-2" />
-                        <div className="h-4 w-64 bg-[#F5F5F3]/50 rounded mb-2" />
+                        <div className="skeleton h-5 w-48 mb-2" />
+                        <div className="skeleton h-4 w-64 mb-2" />
                         <div className="flex gap-3">
-                          <div className="h-3 w-20 bg-[#F5F5F3]/50 rounded" />
-                          <div className="h-3 w-16 bg-[#F5F5F3]/50 rounded" />
+                          <div className="skeleton h-3 w-20" />
+                          <div className="skeleton h-3 w-16" />
                         </div>
                       </div>
-                      <div className="h-8 w-24 bg-[#F5F5F3] rounded-lg" />
+                      <div className="skeleton h-8 w-24" />
                     </div>
                   </div>
                 ))}
               </div>
 
-              {/* Right Column: Map Skeleton */}
+              {/* Map Skeleton */}
               <div className="hidden lg:block">
-                <div className="sticky top-24 h-[calc(100vh-8rem)] bg-[#F2FAF7] rounded-2xl border border-[#0F2E2E]/5 flex items-center justify-center">
+                <div className="sticky top-6 h-[calc(100dvh-3rem)] bg-[#F7F7F5] rounded-2xl border border-[#E5E5E5] flex items-center justify-center">
                   <div className="flex flex-col items-center gap-3">
-                    <div className="w-6 h-6 border-2 border-[#0A4D4D] border-t-transparent rounded-full animate-spin" />
-                    <p className="text-sm text-[#5F7A7A]">Loading map...</p>
+                    <div className="size-6 border-2 border-[#0096C7] border-t-transparent rounded-full animate-spin" />
+                    <p className="text-sm text-[#6B6B6B]">Loading map...</p>
                   </div>
                 </div>
               </div>
@@ -466,16 +463,16 @@ ${providerSummaries}`;
         {/* Error State */}
         {error && !isLoading && (
           <div className="py-24 text-center">
-            <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="size-16 bg-[rgba(208,107,140,0.1)] rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="size-8 text-[#D06B8C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
             </div>
-            <h2 className="text-2xl font-semibold text-[#0F2E2E] mb-2">Unable to Load Pricing</h2>
-            <p className="text-[#5F7A7A] mb-6">{error}</p>
+            <h2 className="text-2xl text-[#1A1A1A] mb-2">Unable to Load Pricing</h2>
+            <p className="text-[#6B6B6B] mb-6">{error}</p>
             <button
               onClick={() => router.push("/query")}
-              className="px-6 py-3 bg-[#0A4D4D] text-white rounded-xl font-medium hover:bg-[#0D5F5F] transition-colors"
+              className="btn-primary"
             >
               Try Another Search
             </button>
@@ -487,40 +484,40 @@ ${providerSummaries}`;
           <>
             {/* Header */}
             <div className="mb-8">
-              <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#CCFBF1] text-[#0A4D4D] text-xs font-medium rounded-full mb-4">
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <span className="badge badge-accent mb-4">
+                <svg className="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
                 Price Comparison
               </span>
-              <h1 className="text-3xl md:text-4xl font-semibold leading-[1.1] tracking-tight text-[#0F2E2E] mb-2">
+              <h1 className="text-3xl md:text-4xl font-normal leading-[1.1] text-[#1A1A1A] mb-2">
                 {formatProcedureName(procedureName)}
               </h1>
-              <p className="text-[#5F7A7A]">
+              <p className="text-[#6B6B6B]">
                 {providers.length} providers in {formatProcedureName(apiResponse.data.metro.replace(/_/g, " "))}
               </p>
             </div>
 
             {/* Price Range Summary */}
             {priceRange && (
-              <div className="mb-8 p-6 bg-white rounded-2xl border border-[#0F2E2E]/5 shadow-sm">
+              <div className="mb-8 p-6 bg-white rounded-2xl border border-[#E5E5E5] shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
                 <div className="grid grid-cols-3 gap-6 mb-6">
                   <div>
-                    <p className="text-xs text-[#5F7A7A] mb-1">Lowest</p>
-                    <p className="text-2xl md:text-3xl font-semibold text-[#22C55E] tabular-nums">{formatCurrency(priceRange.min)}</p>
+                    <p className="text-xs text-[#6B6B6B] mb-1">Lowest</p>
+                    <p className="text-2xl md:text-3xl font-medium text-[#4CAF7C] tabular-nums">{formatCurrency(priceRange.min)}</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-xs text-[#5F7A7A] mb-1">Average</p>
-                    <p className="text-2xl md:text-3xl font-semibold text-[#0F2E2E] tabular-nums">{formatCurrency(priceRange.avg)}</p>
+                    <p className="text-xs text-[#6B6B6B] mb-1">Average</p>
+                    <p className="text-2xl md:text-3xl font-medium text-[#1A1A1A] tabular-nums">{formatCurrency(priceRange.avg)}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs text-[#5F7A7A] mb-1">Highest</p>
-                    <p className="text-2xl md:text-3xl font-semibold text-[#0F2E2E]/40 tabular-nums">{formatCurrency(priceRange.max)}</p>
+                    <p className="text-xs text-[#6B6B6B] mb-1">Highest</p>
+                    <p className="text-2xl md:text-3xl font-medium text-[#9B9B9B] tabular-nums">{formatCurrency(priceRange.max)}</p>
                   </div>
                 </div>
-                <div className="pt-4 border-t border-[#0F2E2E]/5 flex items-center justify-between">
-                  <span className="text-sm text-[#5F7A7A]">Potential savings</span>
-                  <span className="text-xl font-semibold text-[#22C55E] tabular-nums">
+                <div className="pt-4 border-t border-[#F0F0F0] flex items-center justify-between">
+                  <span className="text-sm text-[#6B6B6B]">Potential savings</span>
+                  <span className="text-xl font-medium text-[#4CAF7C] tabular-nums">
                     {formatCurrency(priceRange.max - priceRange.min)}
                   </span>
                 </div>
@@ -536,10 +533,10 @@ ${providerSummaries}`;
                   <div className="mb-6">
                     <button
                       onClick={() => setShowSteps(!showSteps)}
-                      className="flex items-center gap-2 text-sm text-[#5F7A7A] hover:text-[#0A4D4D] transition-colors font-medium"
+                      className="flex items-center gap-2 text-sm text-[#6B6B6B] hover:text-[#1A1A1A] transition-colors font-medium"
                     >
                       <svg
-                        className={`w-4 h-4 transition-transform ${showSteps ? "rotate-180" : ""}`}
+                        className={cn("size-4 transition-transform", showSteps && "rotate-180")}
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -554,15 +551,15 @@ ${providerSummaries}`;
                         {mainSteps.map((step) => (
                           <div
                             key={step.step_number}
-                            className="flex items-start gap-3 p-4 bg-white rounded-xl border border-[#0F2E2E]/5"
+                            className="flex items-start gap-3 p-4 bg-white rounded-xl border border-[#E5E5E5]"
                           >
-                            <div className="w-7 h-7 bg-[#E8F5F0] rounded-lg flex items-center justify-center text-sm font-medium text-[#0A4D4D] flex-shrink-0">
+                            <div className="size-7 bg-[rgba(0,150,199,0.1)] rounded-lg flex items-center justify-center text-sm font-medium text-[#0096C7] flex-shrink-0">
                               {step.step_number}
                             </div>
                             <div className="flex-1">
-                              <p className="text-[#0F2E2E]">{step.description}</p>
+                              <p className="text-[#1A1A1A]">{step.description}</p>
                               {step.probability < 1 && (
-                                <p className="text-xs text-[#5F7A7A] mt-1">
+                                <p className="text-xs text-[#6B6B6B] mt-1">
                                   {Math.round(step.probability * 100)}% likelihood
                                 </p>
                               )}
@@ -575,15 +572,15 @@ ${providerSummaries}`;
                 )}
 
                 {/* Filters & Sort Controls */}
-                <div className="mb-4 p-4 bg-white rounded-xl border border-[#0F2E2E]/5">
+                <div className="mb-4 p-4 bg-white rounded-xl border border-[#E5E5E5]">
                   <div className="flex flex-wrap items-center gap-4">
                     {/* Max Price Filter */}
                     <div className="flex items-center gap-2">
-                      <label className="text-sm text-[#5F7A7A]">Max price:</label>
+                      <label className="text-sm text-[#6B6B6B]">Max price:</label>
                       <select
                         value={maxPrice ?? ""}
                         onChange={(e) => setMaxPrice(e.target.value ? Number(e.target.value) : null)}
-                        className="px-3 py-1.5 bg-[#F8FAFA] border border-[#0F2E2E]/10 rounded-lg text-sm text-[#0F2E2E] focus:outline-none focus:ring-2 focus:ring-[#2DD4BF]/30"
+                        className="px-3 py-1.5 bg-[#F7F7F5] border border-[#E5E5E5] rounded-lg text-sm text-[#1A1A1A] focus:outline-none focus:ring-2 focus:ring-[#0096C7]/20 focus:border-[#0096C7]"
                       >
                         <option value="">Any</option>
                         <option value="1000">Under $1,000</option>
@@ -600,20 +597,20 @@ ${providerSummaries}`;
                         type="checkbox"
                         checked={verifiedOnly}
                         onChange={(e) => setVerifiedOnly(e.target.checked)}
-                        className="w-4 h-4 rounded border-[#0F2E2E]/20 text-[#2DD4BF] focus:ring-[#2DD4BF]/30"
+                        className="size-4 rounded border-[#E5E5E5] text-[#0096C7] focus:ring-[#0096C7]/20"
                       />
-                      <span className="text-sm text-[#5F7A7A]">Verified prices only</span>
+                      <span className="text-sm text-[#6B6B6B]">Verified prices only</span>
                     </label>
 
                     <div className="flex-1" />
 
                     {/* Sort */}
                     <div className="flex items-center gap-2">
-                      <label className="text-sm text-[#5F7A7A]">Sort:</label>
+                      <label className="text-sm text-[#6B6B6B]">Sort:</label>
                       <select
                         value={sortBy}
                         onChange={(e) => setSortBy(e.target.value as SortOption)}
-                        className="px-3 py-1.5 bg-[#F8FAFA] border border-[#0F2E2E]/10 rounded-lg text-sm text-[#0F2E2E] focus:outline-none focus:ring-2 focus:ring-[#2DD4BF]/30"
+                        className="px-3 py-1.5 bg-[#F7F7F5] border border-[#E5E5E5] rounded-lg text-sm text-[#1A1A1A] focus:outline-none focus:ring-2 focus:ring-[#0096C7]/20 focus:border-[#0096C7]"
                       >
                         {sortOptions.map((option) => (
                           <option key={option.value} value={option.value}>
@@ -626,8 +623,8 @@ ${providerSummaries}`;
 
                   {/* Filter Summary */}
                   {(maxPrice !== null || verifiedOnly) && (
-                    <div className="mt-3 pt-3 border-t border-[#0F2E2E]/5 flex items-center justify-between">
-                      <p className="text-xs text-[#5F7A7A]">
+                    <div className="mt-3 pt-3 border-t border-[#F0F0F0] flex items-center justify-between">
+                      <p className="text-xs text-[#6B6B6B]">
                         Showing {sortedProviders.length} of {providers.length} providers
                       </p>
                       <button
@@ -635,7 +632,7 @@ ${providerSummaries}`;
                           setMaxPrice(null);
                           setVerifiedOnly(false);
                         }}
-                        className="text-xs text-[#2DD4BF] hover:text-[#0A4D4D] transition-colors"
+                        className="text-xs text-[#0096C7] hover:text-[#0077B6] transition-colors"
                       >
                         Clear filters
                       </button>
@@ -646,8 +643,8 @@ ${providerSummaries}`;
                 {/* Provider Results */}
                 <div className="space-y-3">
                   {providers.length === 0 && (
-                    <div className="py-12 text-center bg-white rounded-2xl border border-[#0F2E2E]/5">
-                      <p className="text-[#5F7A7A]">No provider pricing data available.</p>
+                    <div className="py-12 text-center bg-white rounded-2xl border border-[#E5E5E5]">
+                      <p className="text-[#6B6B6B]">No provider pricing data available.</p>
                     </div>
                   )}
 
@@ -661,15 +658,18 @@ ${providerSummaries}`;
                     return (
                       <div
                         key={index}
-                        className={`bg-white rounded-2xl border overflow-hidden transition-all ${
-                          isLowestPrice ? "border-[#22C55E]/30 ring-1 ring-[#22C55E]/10" : "border-[#0F2E2E]/5 hover:border-[#0F2E2E]/10"
-                        }`}
+                        className={cn(
+                          "bg-white rounded-2xl border overflow-hidden transition-colors",
+                          isLowestPrice
+                            ? "border-[#4CAF7C]/30 ring-1 ring-[#4CAF7C]/10"
+                            : "border-[#E5E5E5] hover:border-[#E5E5E5]"
+                        )}
                       >
                         {/* Lowest Price Badge */}
                         {isLowestPrice && (
-                          <div className="px-5 py-2 bg-[#DCFCE7] border-b border-[#22C55E]/10">
-                            <span className="text-xs font-medium text-[#166534] flex items-center gap-1.5">
-                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <div className="px-5 py-2 bg-[rgba(76,175,124,0.1)] border-b border-[#4CAF7C]/10">
+                            <span className="text-xs font-medium text-[#3D9066] flex items-center gap-1.5">
+                              <svg className="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                               </svg>
                               Lowest Price
@@ -680,23 +680,26 @@ ${providerSummaries}`;
                         {/* Provider Header */}
                         <button
                           onClick={() => toggleProvider(index)}
-                          className="w-full p-5 md:p-6 text-left flex items-center justify-between hover:bg-[#F2FAF7]/50 transition-colors"
+                          className="w-full p-5 md:p-6 text-left flex items-center justify-between hover:bg-[#F7F7F5]/50 transition-colors"
                         >
                           <div className="flex items-center gap-4 flex-1 min-w-0">
-                            <div className="w-12 h-12 bg-[#F2FAF7] rounded-xl flex items-center justify-center text-[#0A4D4D] flex-shrink-0">
-                              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div className="size-12 bg-[#F7F7F5] rounded-xl flex items-center justify-center text-[#0096C7] flex-shrink-0">
+                              <svg className="size-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                               </svg>
                             </div>
                             <div className="flex-1 min-w-0">
-                              <h3 className="font-medium text-[#0F2E2E] truncate">{provider.name}</h3>
-                              <p className="text-sm text-[#5F7A7A] truncate">{cleanAddress(provider.address)}</p>
+                              <h3 className="font-medium text-[#1A1A1A] truncate">{provider.name}</h3>
+                              <p className="text-sm text-[#6B6B6B] truncate">{cleanAddress(provider.address)}</p>
                               <div className="flex items-center gap-3 mt-2">
-                                <span className="text-xs text-[#5F7A7A]">
+                                <span className="text-xs text-[#6B6B6B]">
                                   {provider.coverage.score}% coverage
                                 </span>
-                                <span className="text-[#94A3A3]">·</span>
-                                <span className={`text-xs ${mrfCount === totalItems ? "text-[#22C55E]" : "text-[#5F7A7A]"}`}>
+                                <span className="text-[#E5E5E5]">·</span>
+                                <span className={cn(
+                                  "text-xs",
+                                  mrfCount === totalItems ? "text-[#4CAF7C]" : "text-[#6B6B6B]"
+                                )}>
                                   {mrfCount}/{totalItems} verified
                                 </span>
                               </div>
@@ -704,12 +707,18 @@ ${providerSummaries}`;
                           </div>
                           <div className="flex items-center gap-4 ml-4">
                             <div className="text-right">
-                              <p className={`text-2xl font-semibold tabular-nums ${isLowestPrice ? "text-[#22C55E]" : "text-[#0F2E2E]"}`}>
+                              <p className={cn(
+                                "text-2xl font-medium tabular-nums",
+                                isLowestPrice ? "text-[#4CAF7C]" : "text-[#1A1A1A]"
+                              )}>
                                 {formatCurrency(provider.totalCost)}
                               </p>
                             </div>
                             <svg
-                              className={`w-5 h-5 text-[#5F7A7A] transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                              className={cn(
+                                "size-5 text-[#6B6B6B] transition-transform",
+                                isExpanded && "rotate-180"
+                              )}
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -721,26 +730,26 @@ ${providerSummaries}`;
 
                         {/* Expanded Details */}
                         {isExpanded && (
-                          <div className="border-t border-[#0F2E2E]/5 p-5 md:p-6 bg-[#F2FAF7]">
+                          <div className="border-t border-[#F0F0F0] p-5 md:p-6 bg-[#F7F7F5]">
                             {/* Coverage Bar */}
-                            <div className="mb-6 p-4 bg-white rounded-xl border border-[#0F2E2E]/5">
+                            <div className="mb-6 p-4 bg-white rounded-xl border border-[#E5E5E5]">
                               <div className="flex items-center justify-between mb-2">
-                                <span className="text-sm text-[#5F7A7A]">Data Coverage</span>
-                                <span className="text-lg font-semibold text-[#0F2E2E]">{provider.coverage.score}%</span>
+                                <span className="text-sm text-[#6B6B6B]">Data Coverage</span>
+                                <span className="text-lg font-medium text-[#1A1A1A] tabular-nums">{provider.coverage.score}%</span>
                               </div>
-                              <div className="w-full bg-[#E8F5F0] rounded-full h-2">
+                              <div className="progress-bar">
                                 <div
-                                  className="bg-gradient-to-r from-[#2DD4BF] to-[#22C55E] h-2 rounded-full transition-all"
+                                  className="progress-bar-fill"
                                   style={{ width: `${provider.coverage.score}%` }}
                                 />
                               </div>
-                              <p className="text-xs text-[#5F7A7A] mt-2">
+                              <p className="text-xs text-[#6B6B6B] mt-2">
                                 {provider.coverage.matched_items} of {provider.coverage.total_items} cost items matched
                               </p>
                             </div>
 
                             {/* Cost Breakdown */}
-                            <h4 className="text-xs tracking-[0.15em] uppercase text-[#5F7A7A] mb-4">Cost Breakdown</h4>
+                            <h4 className="text-overline text-[#6B6B6B] mb-4">Cost Breakdown</h4>
                             <div className="space-y-3">
                               {Array.from(groupedBreakdown.entries())
                                 .sort(([a], [b]) => a - b)
@@ -749,18 +758,18 @@ ${providerSummaries}`;
                                   const stepTotal = items.reduce((sum, item) => sum + item.cost, 0);
 
                                   return (
-                                    <div key={stepNum} className="bg-white rounded-xl border border-[#0F2E2E]/5 overflow-hidden">
-                                      <div className="px-4 py-3 border-b border-[#0F2E2E]/5 flex items-center justify-between bg-[#F2FAF7]">
+                                    <div key={stepNum} className="bg-white rounded-xl border border-[#E5E5E5] overflow-hidden">
+                                      <div className="px-4 py-3 border-b border-[#F0F0F0] flex items-center justify-between bg-[#F7F7F5]">
                                         <div className="flex items-center gap-2">
-                                          <span className="w-6 h-6 bg-[#E8F5F0] rounded-md flex items-center justify-center text-xs font-medium text-[#0A4D4D]">
+                                          <span className="size-6 bg-[rgba(0,150,199,0.1)] rounded-md flex items-center justify-center text-xs font-medium text-[#0096C7]">
                                             {stepNum}
                                           </span>
-                                          <span className="text-sm font-medium text-[#0F2E2E]">{stepDescription}</span>
+                                          <span className="text-sm font-medium text-[#1A1A1A]">{stepDescription}</span>
                                         </div>
-                                        <span className="font-semibold text-[#0F2E2E] tabular-nums">{formatCurrency(stepTotal)}</span>
+                                        <span className="font-medium text-[#1A1A1A] tabular-nums">{formatCurrency(stepTotal)}</span>
                                       </div>
 
-                                      <div className="divide-y divide-[#0F2E2E]/5">
+                                      <div className="divide-y divide-[#F0F0F0]">
                                         {items.map((item, itemIndex) => {
                                           const subStep = clusterToSubStep.get(item.cluster_id);
                                           const badge = getPriceTypeBadge(item.price_type);
@@ -770,25 +779,30 @@ ${providerSummaries}`;
                                               <div className="flex-1 min-w-0">
                                                 <div className="flex items-center gap-2 mb-1">
                                                   {subStep && (
-                                                    <span className="text-xs text-[#5F7A7A] capitalize">
+                                                    <span className="text-xs text-[#6B6B6B] capitalize">
                                                       {subStep.category.replace(/_/g, " ")}
                                                     </span>
                                                   )}
-                                                  <span className={`text-xs px-2 py-0.5 rounded-full ${badge.isVerified ? "bg-[#DCFCE7] text-[#166534]" : "bg-[#F2FAF7] text-[#5F7A7A]"}`}>
+                                                  <span className={cn(
+                                                    "text-xs px-2 py-0.5 rounded-full",
+                                                    badge.isVerified
+                                                      ? "bg-[rgba(76,175,124,0.1)] text-[#3D9066]"
+                                                      : "bg-[#F7F7F5] text-[#6B6B6B]"
+                                                  )}>
                                                     {badge.label}
                                                   </span>
                                                 </div>
-                                                <p className="text-sm text-[#0F2E2E]/70 truncate">
+                                                <p className="text-sm text-[#6B6B6B] truncate">
                                                   {subStep?.service_description || item.cluster_id}
                                                 </p>
                                                 {item.cash_pay && item.cash_pay !== item.cost && (
-                                                  <p className="text-xs text-[#5F7A7A] mt-1">
+                                                  <p className="text-xs text-[#6B6B6B] mt-1">
                                                     Cash: {formatCurrency(item.cash_pay)}
                                                   </p>
                                                 )}
                                               </div>
                                               <div className="text-right flex-shrink-0">
-                                                <p className="font-medium text-[#0F2E2E] tabular-nums">{formatCurrency(item.cost)}</p>
+                                                <p className="font-medium text-[#1A1A1A] tabular-nums">{formatCurrency(item.cost)}</p>
                                               </div>
                                             </div>
                                           );
@@ -800,20 +814,20 @@ ${providerSummaries}`;
                             </div>
 
                             {/* Request Quote Button */}
-                            <div className="mt-6 pt-4 border-t border-[#0F2E2E]/5">
+                            <div className="mt-6 pt-4 border-t border-[#E5E5E5]">
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setOutreachProvider(provider);
                                 }}
-                                className="w-full flex items-center justify-center gap-2 py-4 px-6 bg-[#0A4D4D] hover:bg-[#0D5F5F] text-white font-medium rounded-xl transition-all shadow-sm hover:shadow-md"
+                                className="w-full btn-primary flex items-center justify-center gap-2"
                               >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                 </svg>
                                 Request Quote
                               </button>
-                              <p className="text-center text-xs text-[#5F7A7A] mt-2">
+                              <p className="text-center text-xs text-[#6B6B6B] mt-2">
                                 We&apos;ll draft a Good Faith Estimate request for you
                               </p>
                             </div>
@@ -827,7 +841,7 @@ ${providerSummaries}`;
 
               {/* Right Column: Map */}
               <div className="hidden lg:block">
-                <div className="sticky top-24 h-[calc(100vh-8rem)]">
+                <div className="sticky top-6 h-[calc(100dvh-3rem)]">
                   {providers.length > 0 && process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN && (
                     <ProvidersMap
                       providers={providers}
@@ -876,9 +890,9 @@ ${providerSummaries}`;
 
         {/* Share Toast */}
         {showShareToast && (
-          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-bottom-4 duration-200">
-            <div className="flex items-center gap-2 px-4 py-3 bg-[#0F2E2E] text-white rounded-xl shadow-lg">
-              <svg className="w-4 h-4 text-[#2DD4BF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-slide-up">
+            <div className="flex items-center gap-2 px-4 py-3 bg-[#1A1A1A] text-white rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.15)]">
+              <svg className="size-4 text-[#4CAF7C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
               <span className="text-sm font-medium">Link copied to clipboard</span>
@@ -894,10 +908,10 @@ export default function ResultsPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#FDFCFA] flex items-center justify-center">
+        <div className="min-h-dvh bg-[#F7F7F5] flex items-center justify-center">
           <div className="flex flex-col items-center">
-            <div className="w-8 h-8 border-2 border-[#0A4D4D] border-t-transparent rounded-full animate-spin mb-4" />
-            <p className="text-[#5F7A7A]">Loading...</p>
+            <div className="size-8 border-2 border-[#0096C7] border-t-transparent rounded-full animate-spin mb-4" />
+            <p className="text-[#6B6B6B]">Loading...</p>
           </div>
         </div>
       }

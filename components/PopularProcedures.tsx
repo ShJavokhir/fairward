@@ -15,12 +15,12 @@ export default function PopularProcedures({
 }: PopularProceduresProps) {
   if (compact) {
     return (
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 justify-center">
         {POPULAR_PROCEDURES.slice(0, 6).map((procedure) => (
           <button
             key={procedure.id}
             onClick={() => onSelect(procedure)}
-            className="px-3 py-1.5 bg-white border border-[#1A1A1A]/10 rounded-full text-sm text-[#6B6B6B] hover:border-[#0096C7]/40 hover:text-[#0096C7] hover:bg-[#E3F6FC] transition-all"
+            className="px-3 py-1.5 bg-white border border-[#E5E7EB] rounded-full text-sm text-[#6B7280] hover:border-[#002125]/40 hover:text-[#002125] hover:bg-[#E9FAE7] transition-all"
           >
             <span className="mr-1.5">{procedure.icon}</span>
             {procedure.name}
@@ -38,13 +38,13 @@ export default function PopularProcedures({
           <button
             key={procedure.id}
             onClick={() => onSelect(procedure)}
-            className="p-4 bg-white border border-[#1A1A1A]/5 rounded-xl text-left hover:border-[#0096C7]/30 hover:shadow-sm transition-all group"
+            className="p-4 bg-white border border-[#E5E7EB] rounded-xl text-left hover:border-[#002125]/30 transition-all group"
           >
             <span className="text-2xl mb-2 block">{procedure.icon}</span>
-            <p className="font-medium text-[#1A1A1A] text-sm group-hover:text-[#0096C7] transition-colors">
+            <p className="font-medium text-[#17270C] text-sm group-hover:text-[#002125] transition-colors">
               {procedure.name}
             </p>
-            <p className="text-xs text-[#9B9B9B] capitalize mt-1">
+            <p className="text-xs text-[#6B7280] capitalize mt-1">
               {procedure.category}
             </p>
           </button>

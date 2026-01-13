@@ -111,7 +111,7 @@ export function ChatPanel({ context }: ChatPanelProps) {
       {/* Toggle Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 size-14 bg-[#0096C7] rounded-full shadow-lg shadow-[#0096C7]/25 flex items-center justify-center text-white hover:bg-[#0077B6] active:scale-95 transition-all z-50"
+        className="fixed bottom-6 right-6 size-14 bg-[#002125] rounded-full flex items-center justify-center text-white hover:bg-[#012E33] active:scale-95 transition-all z-50"
         aria-label="Toggle chat"
       >
         {isOpen ? (
@@ -132,9 +132,9 @@ export function ChatPanel({ context }: ChatPanelProps) {
 
       {/* Chat Panel */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 w-96 max-w-[calc(100vw-3rem)] h-[500px] max-h-[calc(100vh-8rem)] bg-white rounded-2xl shadow-xl border border-[#1A1A1A]/10 flex flex-col z-50 overflow-hidden">
+        <div className="fixed bottom-24 right-6 w-96 max-w-[calc(100vw-3rem)] h-[500px] max-h-[calc(100vh-8rem)] bg-white rounded-2xl border border-[#E5E7EB] flex flex-col z-50 overflow-hidden">
           {/* Header */}
-          <div className="px-4 py-3 gradient-teal text-white flex items-center gap-3">
+          <div className="px-4 py-3 bg-[#002125] text-white flex items-center gap-3">
             <div className="size-8 bg-white/20 rounded-full flex items-center justify-center">
               <svg className="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
@@ -152,11 +152,11 @@ export function ChatPanel({ context }: ChatPanelProps) {
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#F7F7F5]">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#F2FBEF]">
             {messages.length === 0 && (
               <div className="text-center py-8">
-                <div className="size-12 bg-[#E8F0EB] rounded-full flex items-center justify-center mx-auto mb-3">
-                  <svg className="size-6 text-[#0D7377]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="size-12 bg-[#E9FAE7] rounded-full flex items-center justify-center mx-auto mb-3">
+                  <svg className="size-6 text-[#002125]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -165,8 +165,8 @@ export function ChatPanel({ context }: ChatPanelProps) {
                     />
                   </svg>
                 </div>
-                <p className="text-[#1A1A1A] font-medium mb-1">How can I help?</p>
-                <p className="text-[#6B6B6B] text-sm">Ask me about pricing, providers, or costs</p>
+                <p className="text-[#17270C] font-medium mb-1">How can I help?</p>
+                <p className="text-[#6B7280] text-sm">Ask me about pricing, providers, or costs</p>
                 <div className="mt-4 space-y-2">
                   <SuggestedQuestion text="Which hospital is cheapest?" onClick={sendMessage} disabled={isLoading} />
                   <SuggestedQuestion text="Explain the cost breakdown" onClick={sendMessage} disabled={isLoading} />
@@ -184,16 +184,16 @@ export function ChatPanel({ context }: ChatPanelProps) {
                   className={cn(
                     "max-w-[85%] px-4 py-2.5 rounded-2xl text-sm",
                     message.role === "user"
-                      ? "bg-[#0096C7] text-white rounded-br-md"
-                      : "bg-white text-[#1A1A1A] rounded-bl-md border border-[#1A1A1A]/10 shadow-sm"
+                      ? "bg-[#002125] text-white rounded-br-md"
+                      : "bg-white text-[#17270C] rounded-bl-md border border-[#E5E7EB]"
                   )}
                 >
                   <p className="whitespace-pre-wrap text-pretty">
                     {message.content || (
                       <span className="flex items-center gap-1">
-                        <span className="size-2 bg-[#00B4D8] rounded-full animate-bounce" />
-                        <span className="size-2 bg-[#00B4D8] rounded-full animate-bounce [animation-delay:0.1s]" />
-                        <span className="size-2 bg-[#00B4D8] rounded-full animate-bounce [animation-delay:0.2s]" />
+                        <span className="size-2 bg-[#98FB98] rounded-full animate-bounce" />
+                        <span className="size-2 bg-[#98FB98] rounded-full animate-bounce [animation-delay:0.1s]" />
+                        <span className="size-2 bg-[#98FB98] rounded-full animate-bounce [animation-delay:0.2s]" />
                       </span>
                     )}
                   </p>
@@ -205,20 +205,20 @@ export function ChatPanel({ context }: ChatPanelProps) {
           </div>
 
           {/* Input */}
-          <form onSubmit={handleSubmit} className="p-3 border-t border-[#1A1A1A]/5 bg-white">
+          <form onSubmit={handleSubmit} className="p-3 border-t border-[#E5E7EB] bg-white">
             <div className="flex gap-2">
               <input
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Ask about pricing..."
-                className="flex-1 px-4 py-2.5 bg-[#F7F7F5] border border-[#1A1A1A]/10 rounded-xl text-sm text-[#1A1A1A] placeholder:text-[#9B9B9B] focus:outline-none focus:ring-2 focus:ring-[#0096C7]/30 focus:border-[#0096C7]"
+                className="flex-1 px-4 py-2.5 bg-[#F2FBEF] border border-[#E5E7EB] rounded-xl text-sm text-[#17270C] placeholder:text-[#6B7280] focus:outline-none focus:border-[#002125]"
                 disabled={isLoading}
               />
               <button
                 type="submit"
                 disabled={isLoading || !input.trim()}
-                className="px-4 py-2.5 bg-[#0096C7] text-white rounded-xl text-sm font-medium hover:bg-[#0077B6] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-4 py-2.5 bg-[#002125] text-white rounded-xl text-sm font-medium hover:bg-[#012E33] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 aria-label="Send message"
               >
                 <svg className="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -247,7 +247,7 @@ function SuggestedQuestion({
       type="button"
       onClick={() => onClick(text)}
       disabled={disabled}
-      className="w-full px-3 py-2 text-left text-sm text-[#1A1A1A] bg-white hover:bg-[#E8F0EB] rounded-lg transition-colors border border-[#1A1A1A]/10 disabled:opacity-50 disabled:cursor-not-allowed"
+      className="w-full px-3 py-2 text-left text-sm text-[#17270C] bg-white hover:bg-[#E9FAE7] rounded-lg transition-colors border border-[#E5E7EB] disabled:opacity-50 disabled:cursor-not-allowed"
     >
       {text}
     </button>

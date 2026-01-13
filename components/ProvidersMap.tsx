@@ -170,17 +170,17 @@ export default function ProvidersMap({
     };
   }, [geocodedProviders]);
 
-  // Get marker color based on price (using softened serene colors)
+  // Get marker color based on price (sage-aligned semantic palette)
   const getMarkerColor = useCallback(
     (cost: number) => {
-      if (priceRange.max === priceRange.min) return "#4CAF7C"; // optimal if all same price
+      if (priceRange.max === priceRange.min) return "#5A9A6B"; // sage green if all same price
 
       const ratio = (cost - priceRange.min) / (priceRange.max - priceRange.min);
 
-      // Softened: Green → Amber → Rose
-      if (ratio < 0.33) return "#4CAF7C"; // sage-optimal
-      if (ratio < 0.66) return "#E5B84C"; // warm amber
-      return "#D06B8C"; // soft rose
+      // Sage palette: Green → Gold → Rose
+      if (ratio < 0.33) return "#5A9A6B"; // sage green (low)
+      if (ratio < 0.66) return "#C4A86B"; // muted gold (mid)
+      return "#C47B8C"; // dusty rose (high)
     },
     [priceRange]
   );
@@ -228,10 +228,10 @@ export default function ProvidersMap({
 
   if (isLoading) {
     return (
-      <div className="w-full h-full min-h-80 bg-[#F7F7F5] rounded-2xl flex items-center justify-center">
+      <div className="w-full h-full min-h-80 bg-[#F2FBEF] rounded-2xl flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <div className="size-6 border-2 border-[#0096C7] border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-[#6B6B6B]">Loading map...</p>
+          <div className="size-6 border-2 border-[#002125] border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-[#5F7A7A]">Loading map...</p>
         </div>
       </div>
     );
@@ -239,22 +239,22 @@ export default function ProvidersMap({
 
   if (error) {
     return (
-      <div className="w-full h-full min-h-80 bg-[#F7F7F5] rounded-2xl flex items-center justify-center">
-        <p className="text-sm text-[#6B6B6B]">{error}</p>
+      <div className="w-full h-full min-h-80 bg-[#F2FBEF] rounded-2xl flex items-center justify-center">
+        <p className="text-sm text-[#5F7A7A]">{error}</p>
       </div>
     );
   }
 
   if (geocodedProviders.length === 0) {
     return (
-      <div className="w-full h-full min-h-80 bg-[#F7F7F5] rounded-2xl flex items-center justify-center">
-        <p className="text-sm text-[#6B6B6B]">No locations to display</p>
+      <div className="w-full h-full min-h-80 bg-[#F2FBEF] rounded-2xl flex items-center justify-center">
+        <p className="text-sm text-[#5F7A7A]">No locations to display</p>
       </div>
     );
   }
 
   return (
-    <div className="w-full h-full min-h-80 rounded-2xl overflow-hidden border border-[#1A1A1A]/5">
+    <div className="w-full h-full min-h-80 rounded-2xl overflow-hidden border border-[#002125]/10">
       <Map
         ref={mapRef}
         mapboxAccessToken={mapboxToken}
@@ -294,7 +294,7 @@ export default function ProvidersMap({
                 }}
               >
                 <div
-                  className="cursor-pointer flex items-center justify-center rounded-full bg-[#0096C7] text-white font-medium shadow-lg hover:scale-105 transition-transform"
+                  className="cursor-pointer flex items-center justify-center rounded-full bg-[#002125] text-[#CEFDCE] font-medium hover:scale-105 transition-transform"
                   style={{ width: size, height: size }}
                 >
                   {pointCount}
@@ -362,13 +362,13 @@ export default function ProvidersMap({
             className="provider-popup"
           >
             <div className="p-1 min-w-[200px]">
-              <h3 className="font-medium text-[#1A1A1A] text-sm leading-tight mb-1">
+              <h3 className="font-medium text-[#0F2E2E] text-sm leading-tight mb-1">
                 {popupInfo.name}
               </h3>
-              <p className="text-xs text-[#6B6B6B] mb-2">
+              <p className="text-xs text-[#5F7A7A] mb-2">
                 {cleanAddress(popupInfo.address)}
               </p>
-              <p className="text-lg font-semibold text-[#1A1A1A] mb-3 tabular-nums">
+              <p className="text-lg font-semibold text-[#0F2E2E] mb-3 tabular-nums">
                 {formatCurrency(popupInfo.totalCost)}
               </p>
               {onRequestQuote && (
@@ -377,7 +377,7 @@ export default function ProvidersMap({
                     onRequestQuote(popupInfo);
                     setPopupInfo(null);
                   }}
-                  className="w-full py-2 px-3 bg-[#0096C7] hover:bg-[#0077B6] text-white text-xs font-medium rounded-lg transition-colors flex items-center justify-center gap-1.5"
+                  className="w-full py-2 px-3 bg-[#002125] hover:bg-[#012E33] text-[#CEFDCE] text-xs font-medium rounded-full transition-colors flex items-center justify-center gap-1.5"
                 >
                   <svg className="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -391,18 +391,18 @@ export default function ProvidersMap({
       </Map>
 
       {/* Legend */}
-      <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 text-xs flex items-center gap-3 border border-[#1A1A1A]/5">
+      <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 text-xs flex items-center gap-3 border border-[#002125]/10">
         <div className="flex items-center gap-1.5">
-          <div className="size-3 rounded-full bg-[#4CAF7C]" />
-          <span className="text-[#6B6B6B]">Low</span>
+          <div className="size-3 rounded-full bg-[#5A9A6B]" />
+          <span className="text-[#5F7A7A]">Low</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="size-3 rounded-full bg-[#E5B84C]" />
-          <span className="text-[#6B6B6B]">Mid</span>
+          <div className="size-3 rounded-full bg-[#C4A86B]" />
+          <span className="text-[#5F7A7A]">Mid</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="size-3 rounded-full bg-[#D06B8C]" />
-          <span className="text-[#6B6B6B]">High</span>
+          <div className="size-3 rounded-full bg-[#C47B8C]" />
+          <span className="text-[#5F7A7A]">High</span>
         </div>
       </div>
     </div>

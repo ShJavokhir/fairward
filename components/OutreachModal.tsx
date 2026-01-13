@@ -234,26 +234,26 @@ export default function OutreachModal({
     <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-[#1A1A1A]/60 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 bg-[#0F2E2E]/60 backdrop-blur-sm transition-opacity"
         onClick={handleClose}
       />
 
       {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-4">
-        <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden">
+        <div className="relative w-full max-w-lg bg-white rounded-2xl border border-[#002125]/10 overflow-hidden">
           {/* Header */}
-          <div className="px-6 py-4 border-b border-[#1A1A1A]/5">
+          <div className="px-6 py-4 border-b border-[#002125]/10">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-semibold text-[#1A1A1A]">Get a Price Quote</h2>
-                <p className="text-[#6B6B6B] text-sm">{providerName}</p>
+                <h2 className="text-lg font-semibold text-[#0F2E2E]">Get a Price Quote</h2>
+                <p className="text-[#5F7A7A] text-sm">{providerName}</p>
               </div>
               <button
                 onClick={handleClose}
-                className="size-8 flex items-center justify-center rounded-full hover:bg-[#F7F7F5] transition-colors"
+                className="size-8 flex items-center justify-center rounded-full hover:bg-[#F2FBEF] transition-colors"
                 aria-label="Close modal"
               >
-                <svg className="size-5 text-[#9B9B9B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="size-5 text-[#5F7A7A]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
@@ -261,14 +261,14 @@ export default function OutreachModal({
           </div>
 
           {/* Tabs */}
-          <div className="flex border-b border-[#1A1A1A]/5">
+          <div className="flex border-b border-[#002125]/10">
             <button
               onClick={() => setActiveTab("call")}
               className={cn(
                 "flex-1 px-4 py-3 text-sm font-medium transition-colors",
                 activeTab === "call"
-                  ? "text-[#0096C7] border-b-2 border-[#0096C7]"
-                  : "text-[#6B6B6B] hover:text-[#1A1A1A]"
+                  ? "text-[#002125] border-b-2 border-[#002125]"
+                  : "text-[#5F7A7A] hover:text-[#0F2E2E]"
               )}
             >
               <span className="flex items-center justify-center gap-2">
@@ -283,8 +283,8 @@ export default function OutreachModal({
               className={cn(
                 "flex-1 px-4 py-3 text-sm font-medium transition-colors",
                 activeTab === "email"
-                  ? "text-[#0096C7] border-b-2 border-[#0096C7]"
-                  : "text-[#6B6B6B] hover:text-[#1A1A1A]"
+                  ? "text-[#002125] border-b-2 border-[#002125]"
+                  : "text-[#5F7A7A] hover:text-[#0F2E2E]"
               )}
             >
               <span className="flex items-center justify-center gap-2">
@@ -303,24 +303,24 @@ export default function OutreachModal({
                 {/* Call Success State */}
                 {callStatus === "calling" && (
                   <div className="text-center py-8">
-                    <div className="size-16 bg-[#D4EDDA] rounded-full flex items-center justify-center mx-auto mb-4">
-                      <svg className="size-8 text-[#2ECC71]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="size-16 bg-[#E9FAE7] rounded-full flex items-center justify-center mx-auto mb-4">
+                      <svg className="size-8 text-[#5A9A6B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
                     </div>
-                    <h3 className="text-lg font-semibold text-[#1A1A1A] mb-2">Call in Progress</h3>
-                    <p className="text-[#6B6B6B] text-sm mb-4 text-pretty">
+                    <h3 className="text-lg font-semibold text-[#0F2E2E] mb-2">Call in Progress</h3>
+                    <p className="text-[#5F7A7A] text-sm mb-4 text-pretty">
                       Our AI assistant is calling {providerName} to request a price quote for your procedure.
                     </p>
-                    <p className="text-[#6B6B6B] text-sm">
-                      The quote will be sent to <strong className="text-[#1A1A1A]">{patientEmail}</strong>
+                    <p className="text-[#5F7A7A] text-sm">
+                      The quote will be sent to <strong className="text-[#0F2E2E]">{patientEmail}</strong>
                     </p>
                     {callId && (
-                      <p className="text-[#9B9B9B] text-xs mt-4">Reference: {callId}</p>
+                      <p className="text-[#5F7A7A]/70 text-xs mt-4">Reference: {callId}</p>
                     )}
                     <button
                       onClick={handleClose}
-                      className="mt-6 px-6 py-2 bg-[#F7F7F5] hover:bg-[#F2F0ED] text-[#1A1A1A] rounded-lg text-sm font-medium transition-colors"
+                      className="mt-6 px-6 py-2 bg-[#F2FBEF] hover:bg-[#E9FAE7] text-[#0F2E2E] rounded-full text-sm font-medium transition-colors"
                     >
                       Close
                     </button>
@@ -330,11 +330,11 @@ export default function OutreachModal({
                 {/* Connecting State */}
                 {callStatus === "connecting" && (
                   <div className="text-center py-8">
-                    <div className="size-16 bg-[#E3F6FC] rounded-full flex items-center justify-center mx-auto mb-4">
-                      <div className="size-8 border-3 border-[#0096C7] border-t-transparent rounded-full animate-spin" />
+                    <div className="size-16 bg-[#E9FAE7] rounded-full flex items-center justify-center mx-auto mb-4">
+                      <div className="size-8 border-3 border-[#002125] border-t-transparent rounded-full animate-spin" />
                     </div>
-                    <h3 className="text-lg font-semibold text-[#1A1A1A] mb-2">Initiating Call...</h3>
-                    <p className="text-[#6B6B6B] text-sm">Please wait while we connect to the provider.</p>
+                    <h3 className="text-lg font-semibold text-[#0F2E2E] mb-2">Initiating Call...</h3>
+                    <p className="text-[#5F7A7A] text-sm">Please wait while we connect to the provider.</p>
                   </div>
                 )}
 
@@ -343,24 +343,24 @@ export default function OutreachModal({
                   <>
                     {/* Error Banner */}
                     {callError && (
-                      <div className="bg-[#FCE8F1] border border-[#E91E8C]/20 rounded-lg p-3 flex items-start gap-2">
-                        <svg className="size-5 text-[#E91E8C] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="bg-[#C47B8C]/10 border border-[#C47B8C]/20 rounded-lg p-3 flex items-start gap-2">
+                        <svg className="size-5 text-[#C47B8C] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                         </svg>
-                        <span className="text-[#E91E8C] text-sm">{callError}</span>
+                        <span className="text-[#C47B8C] text-sm">{callError}</span>
                       </div>
                     )}
 
                     {/* Procedure Info */}
-                    <div className="bg-[#F7F7F5] rounded-lg p-4">
+                    <div className="bg-[#F2FBEF] rounded-lg p-4">
                       <div className="flex justify-between items-start">
                         <div>
                           <p className="text-overline">Procedure</p>
-                          <p className="font-medium text-[#1A1A1A]">{formatProcedureName(procedureName)}</p>
+                          <p className="font-medium text-[#0F2E2E]">{formatProcedureName(procedureName)}</p>
                         </div>
                         <div className="text-right">
                           <p className="text-overline">Est. Cost</p>
-                          <p className="font-semibold text-[#1A1A1A] tabular-nums">${estimatedCost.toLocaleString()}</p>
+                          <p className="font-semibold text-[#0F2E2E] tabular-nums">${estimatedCost.toLocaleString()}</p>
                         </div>
                       </div>
                     </div>
@@ -368,53 +368,53 @@ export default function OutreachModal({
                     {/* Form Fields */}
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-sm font-medium text-[#1A1A1A] mb-1.5">
-                          Your Name <span className="text-[#E91E8C]">*</span>
+                        <label className="block text-sm font-medium text-[#0F2E2E] mb-1.5">
+                          Your Name <span className="text-[#C47B8C]">*</span>
                         </label>
                         <input
                           type="text"
                           value={patientName}
                           onChange={(e) => setPatientName(e.target.value)}
                           placeholder="John Smith"
-                          className="w-full px-3 py-2.5 bg-white border border-[#1A1A1A]/10 rounded-lg text-[#1A1A1A] placeholder:text-[#9B9B9B] focus:outline-none focus:ring-2 focus:ring-[#0096C7]/30 focus:border-[#0096C7]"
+                          className="w-full px-3 py-2.5 bg-white border border-[#002125]/10 rounded-lg text-[#0F2E2E] placeholder:text-[#5F7A7A] focus:outline-none focus:border-[#002125]"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-[#1A1A1A] mb-1.5">
-                          Email <span className="text-[#E91E8C]">*</span>
+                        <label className="block text-sm font-medium text-[#0F2E2E] mb-1.5">
+                          Email <span className="text-[#C47B8C]">*</span>
                         </label>
                         <input
                           type="email"
                           value={patientEmail}
                           onChange={(e) => setPatientEmail(e.target.value)}
                           placeholder="john@example.com"
-                          className="w-full px-3 py-2.5 bg-white border border-[#1A1A1A]/10 rounded-lg text-[#1A1A1A] placeholder:text-[#9B9B9B] focus:outline-none focus:ring-2 focus:ring-[#0096C7]/30 focus:border-[#0096C7]"
+                          className="w-full px-3 py-2.5 bg-white border border-[#002125]/10 rounded-lg text-[#0F2E2E] placeholder:text-[#5F7A7A] focus:outline-none focus:border-[#002125]"
                         />
-                        <p className="text-xs text-[#9B9B9B] mt-1">Quote will be sent here</p>
+                        <p className="text-xs text-[#5F7A7A] mt-1">Quote will be sent here</p>
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-[#1A1A1A] mb-1.5">
-                          Phone <span className="text-[#9B9B9B] font-normal">(optional)</span>
+                        <label className="block text-sm font-medium text-[#0F2E2E] mb-1.5">
+                          Phone <span className="text-[#5F7A7A] font-normal">(optional)</span>
                         </label>
                         <input
                           type="tel"
                           value={patientPhone}
                           onChange={(e) => setPatientPhone(e.target.value)}
                           placeholder="(555) 123-4567"
-                          className="w-full px-3 py-2.5 bg-white border border-[#1A1A1A]/10 rounded-lg text-[#1A1A1A] placeholder:text-[#9B9B9B] focus:outline-none focus:ring-2 focus:ring-[#0096C7]/30 focus:border-[#0096C7]"
+                          className="w-full px-3 py-2.5 bg-white border border-[#002125]/10 rounded-lg text-[#0F2E2E] placeholder:text-[#5F7A7A] focus:outline-none focus:border-[#002125]"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-[#1A1A1A] mb-1.5">
+                        <label className="block text-sm font-medium text-[#0F2E2E] mb-1.5">
                           Insurance
                         </label>
                         <select
                           value={selectedInsurance}
                           onChange={(e) => setSelectedInsurance(e.target.value)}
-                          className="w-full px-3 py-2.5 bg-white border border-[#1A1A1A]/10 rounded-lg text-[#1A1A1A] focus:outline-none focus:ring-2 focus:ring-[#0096C7]/30 focus:border-[#0096C7]"
+                          className="w-full px-3 py-2.5 bg-white border border-[#002125]/10 rounded-lg text-[#0F2E2E] focus:outline-none focus:border-[#002125]"
                         >
                           {INSURANCE_OPTIONS.map((option) => (
                             <option key={option.value} value={option.value}>
@@ -430,10 +430,10 @@ export default function OutreachModal({
                       onClick={startCall}
                       disabled={!canStartCall}
                       className={cn(
-                        "w-full flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-medium transition-all",
+                        "w-full flex items-center justify-center gap-2 py-3 px-4 rounded-full font-medium transition-all",
                         canStartCall
-                          ? "bg-[#0096C7] hover:bg-[#0077B6] text-white"
-                          : "bg-[#F7F7F5] text-[#9B9B9B] cursor-not-allowed"
+                          ? "bg-[#002125] hover:bg-[#012E33] text-[#CEFDCE]"
+                          : "bg-[#F2FBEF] text-[#5F7A7A]/50 cursor-not-allowed"
                       )}
                     >
                       <svg className="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -442,7 +442,7 @@ export default function OutreachModal({
                       Request Quote by Phone
                     </button>
 
-                    <p className="text-center text-xs text-[#9B9B9B]">
+                    <p className="text-center text-xs text-[#5F7A7A]">
                       An AI assistant will call the provider on your behalf
                     </p>
                   </>
@@ -455,20 +455,20 @@ export default function OutreachModal({
               <div className="space-y-4">
                 {isLoading && (
                   <div className="py-8 flex flex-col items-center justify-center">
-                    <div className="size-10 border-3 border-[#0096C7] border-t-transparent rounded-full animate-spin mb-3" />
-                    <p className="text-[#6B6B6B] text-sm">Generating email draft...</p>
+                    <div className="size-10 border-3 border-[#002125] border-t-transparent rounded-full animate-spin mb-3" />
+                    <p className="text-[#5F7A7A] text-sm">Generating email draft...</p>
                   </div>
                 )}
 
                 {error && !isLoading && (
-                  <div className="bg-[#FCE8F1] border border-[#E91E8C]/20 rounded-lg p-4 text-center">
-                    <p className="text-[#E91E8C] text-sm mb-2">{error}</p>
+                  <div className="bg-[#C47B8C]/10 border border-[#C47B8C]/20 rounded-lg p-4 text-center">
+                    <p className="text-[#C47B8C] text-sm mb-2">{error}</p>
                     <button
                       onClick={() => {
                         setError(null);
                         setOutreachData(null);
                       }}
-                      className="text-[#E91E8C] text-sm font-medium hover:underline"
+                      className="text-[#C47B8C] text-sm font-medium hover:underline"
                     >
                       Try again
                     </button>
@@ -478,22 +478,22 @@ export default function OutreachModal({
                 {outreachData && !isLoading && (
                   <>
                     <div>
-                      <label className="block text-sm font-medium text-[#1A1A1A] mb-1.5">Subject</label>
+                      <label className="block text-sm font-medium text-[#0F2E2E] mb-1.5">Subject</label>
                       <input
                         type="text"
                         value={subject}
                         onChange={(e) => setSubject(e.target.value)}
-                        className="w-full px-3 py-2.5 bg-white border border-[#1A1A1A]/10 rounded-lg text-[#1A1A1A] focus:outline-none focus:ring-2 focus:ring-[#0096C7]/30 focus:border-[#0096C7] text-sm"
+                        className="w-full px-3 py-2.5 bg-white border border-[#002125]/10 rounded-lg text-[#0F2E2E] focus:outline-none focus:border-[#002125] text-sm"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-[#1A1A1A] mb-1.5">Email Body</label>
+                      <label className="block text-sm font-medium text-[#0F2E2E] mb-1.5">Email Body</label>
                       <textarea
                         value={body}
                         onChange={(e) => setBody(e.target.value)}
                         rows={12}
-                        className="w-full px-3 py-2.5 bg-white border border-[#1A1A1A]/10 rounded-lg text-[#1A1A1A] focus:outline-none focus:ring-2 focus:ring-[#0096C7]/30 focus:border-[#0096C7] font-mono text-sm leading-relaxed resize-none"
+                        className="w-full px-3 py-2.5 bg-white border border-[#002125]/10 rounded-lg text-[#0F2E2E] focus:outline-none focus:border-[#002125] font-mono text-sm leading-relaxed resize-none"
                       />
                     </div>
 
@@ -501,23 +501,23 @@ export default function OutreachModal({
                       <button
                         onClick={handleCopyToClipboard}
                         className={cn(
-                          "flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg font-medium transition-all text-sm",
+                          "flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-full font-medium transition-all text-sm",
                           copied
-                            ? "bg-[#2ECC71] text-white"
-                            : "bg-[#F7F7F5] hover:bg-[#F2F0ED] text-[#1A1A1A]"
+                            ? "bg-[#5A9A6B] text-white"
+                            : "bg-[#F2FBEF] hover:bg-[#E9FAE7] text-[#0F2E2E]"
                         )}
                       >
                         {copied ? "Copied!" : "Copy"}
                       </button>
                       <button
                         onClick={handleOpenInGmail}
-                        className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 bg-[#F7F7F5] hover:bg-[#F2F0ED] text-[#1A1A1A] rounded-lg font-medium text-sm"
+                        className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 bg-[#F2FBEF] hover:bg-[#E9FAE7] text-[#0F2E2E] rounded-full font-medium text-sm"
                       >
                         Gmail
                       </button>
                       <button
                         onClick={handleOpenInEmail}
-                        className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 bg-[#0096C7] hover:bg-[#0077B6] text-white rounded-lg font-medium text-sm"
+                        className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 bg-[#002125] hover:bg-[#012E33] text-[#CEFDCE] rounded-full font-medium text-sm"
                       >
                         Send Email
                       </button>

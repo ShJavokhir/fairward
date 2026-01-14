@@ -427,7 +427,18 @@ p, .body-text {
 @keyframes slide-up {
   from {
     opacity: 0;
-    transform: translateY(16px);
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-up-soft {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
   }
   to {
     opacity: 1;
@@ -446,6 +457,42 @@ p, .body-text {
   }
 }
 
+@keyframes reveal-up {
+  0% {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes map-reveal {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes number-count {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .animate-fade-in {
   animation: fade-in var(--duration-slow) var(--ease-default) forwards;
 }
@@ -454,16 +501,108 @@ p, .body-text {
   animation: slide-up var(--duration-slow) var(--ease-default) forwards;
 }
 
+.animate-slide-up-soft {
+  animation: slide-up-soft var(--duration-normal) var(--ease-default) forwards;
+}
+
 .animate-scale-in {
   animation: scale-in var(--duration-slow) var(--ease-default) forwards;
 }
 
-/* Stagger delays (120ms intervals) */
+.animate-reveal-up {
+  animation: reveal-up 500ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-map-reveal {
+  animation: map-reveal 600ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-number {
+  animation: number-count 400ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Stagger delays - use CSS custom property for dynamic delays */
+[style*="--stagger-delay"] {
+  animation-delay: calc(var(--stagger-delay, 0) * 80ms);
+}
+
+/* Stagger delays (80ms intervals for smoother cascade) */
 .delay-0 { animation-delay: 0ms; opacity: 0; }
+.delay-1 { animation-delay: 80ms; opacity: 0; }
+.delay-2 { animation-delay: 160ms; opacity: 0; }
+.delay-3 { animation-delay: 240ms; opacity: 0; }
+.delay-4 { animation-delay: 320ms; opacity: 0; }
+.delay-5 { animation-delay: 400ms; opacity: 0; }
+.delay-6 { animation-delay: 480ms; opacity: 0; }
+.delay-7 { animation-delay: 560ms; opacity: 0; }
+.delay-8 { animation-delay: 640ms; opacity: 0; }
+
+/* Legacy delays for compatibility */
 .delay-120 { animation-delay: 120ms; opacity: 0; }
 .delay-240 { animation-delay: 240ms; opacity: 0; }
 .delay-360 { animation-delay: 360ms; opacity: 0; }
 .delay-480 { animation-delay: 480ms; opacity: 0; }
+
+/* Provider card stagger animation */
+.provider-card-animate {
+  opacity: 0;
+  animation: reveal-up 500ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Map container with loading state */
+.map-container {
+  opacity: 0;
+  transition: opacity 0ms;
+}
+
+.map-container.map-loaded {
+  opacity: 1;
+  animation: map-reveal 600ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ============================================================================
+   Expand/Collapse Animations
+   ============================================================================ */
+
+@keyframes expand-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes expand-item {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-expand-in {
+  animation: expand-in 300ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.expand-item {
+  opacity: 0;
+  animation: expand-item 350ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.expand-item-delay-1 { animation-delay: 50ms; }
+.expand-item-delay-2 { animation-delay: 100ms; }
+.expand-item-delay-3 { animation-delay: 150ms; }
+.expand-item-delay-4 { animation-delay: 200ms; }
+.expand-item-delay-5 { animation-delay: 250ms; }
+.expand-item-delay-6 { animation-delay: 300ms; }
+.expand-item-delay-7 { animation-delay: 350ms; }
+.expand-item-delay-8 { animation-delay: 400ms; }
 
 /* ============================================================================
    Scrollbar

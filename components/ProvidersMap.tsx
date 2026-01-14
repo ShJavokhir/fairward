@@ -24,6 +24,7 @@ interface ProvidersMapProps {
   onProviderClick?: (index: number) => void;
   onRequestQuote?: (provider: Provider) => void;
   selectedIndex?: number | null;
+  onMapReady?: () => void;
 }
 
 type ProviderPoint = GeoJSON.Feature<GeoJSON.Point, GeocodedProvider>;
@@ -51,9 +52,11 @@ export default function ProvidersMap({
   onProviderClick,
   onRequestQuote,
   selectedIndex,
+  onMapReady,
 }: ProvidersMapProps) {
   const [geocodedProviders, setGeocodedProviders] = useState<GeocodedProvider[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [popupInfo, setPopupInfo] = useState<GeocodedProvider | null>(null);
   const [zoom, setZoom] = useState(10);
@@ -226,6 +229,16 @@ export default function ProvidersMap({
     setZoom(map.getZoom());
   }, []);
 
+  // Handle map load complete
+  const onMapLoad = useCallback(() => {
+    onMapMove();
+    // Small delay to ensure map tiles are rendered
+    setTimeout(() => {
+      setIsMapLoaded(true);
+      onMapReady?.();
+    }, 100);
+  }, [onMapMove, onMapReady]);
+
   if (isLoading) {
     return (
       <div className="w-full h-full min-h-80 bg-[#F2FBEF] rounded-2xl flex items-center justify-center">
@@ -254,7 +267,11 @@ export default function ProvidersMap({
   }
 
   return (
-    <div className="w-full h-full min-h-80 rounded-2xl overflow-hidden border border-[#002125]/10">
+    <div className={cn(
+      "w-full h-full min-h-80 rounded-2xl overflow-hidden border border-[#002125]/10",
+      "map-container",
+      isMapLoaded && "map-loaded"
+    )}>
       <Map
         ref={mapRef}
         mapboxAccessToken={mapboxToken}
@@ -263,7 +280,7 @@ export default function ProvidersMap({
         mapStyle="mapbox://styles/mapbox/light-v11"
         attributionControl={false}
         onMove={onMapMove}
-        onLoad={onMapMove}
+        onLoad={onMapLoad}
       >
         <NavigationControl position="top-right" showCompass={false} />
 

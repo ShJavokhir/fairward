@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { Suspense, useState, useEffect, useMemo } from "react";
+import { Suspense, useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import OutreachModal from "@/components/OutreachModal";
 import { ChatPanel } from "@/components/ChatPanel";
@@ -188,6 +188,10 @@ function ResultsContent() {
   const [outreachProvider, setOutreachProvider] = useState<ProviderResult | null>(null);
   const [showShareToast, setShowShareToast] = useState(false);
 
+  // Animation states
+  const [isContentReady, setIsContentReady] = useState(false);
+  const [visibleCards, setVisibleCards] = useState(0);
+
   const handleShare = async () => {
     const url = window.location.href;
     try {
@@ -242,6 +246,48 @@ function ResultsContent() {
 
     fetchPricing();
   }, [procedureId, metroSlug]);
+
+  // Trigger content reveal animation when data loads
+  useEffect(() => {
+    if (!isLoading && apiResponse && !error) {
+      // Small delay to ensure DOM is ready
+      const timer = setTimeout(() => {
+        setIsContentReady(true);
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading, apiResponse, error]);
+
+  // Staggered card reveal animation
+  useEffect(() => {
+    if (!isContentReady || !apiResponse) return;
+
+    const totalCards = apiResponse.data?.results?.results?.length || 0;
+    if (totalCards === 0) return;
+
+    // Reveal cards one by one with staggered animation
+    let currentCard = 0;
+    const interval = setInterval(() => {
+      currentCard++;
+      setVisibleCards(currentCard);
+      if (currentCard >= totalCards) {
+        clearInterval(interval);
+      }
+    }, 80); // 80ms between each card
+
+    return () => clearInterval(interval);
+  }, [isContentReady, apiResponse]);
+
+  // When filters change after initial load, show all cards instantly
+  const hasFiltersChanged = useRef(false);
+  useEffect(() => {
+    if (!isContentReady) return;
+    if (hasFiltersChanged.current) {
+      // Instant reveal after filter change (no stagger)
+      setVisibleCards(999);
+    }
+    hasFiltersChanged.current = true;
+  }, [sortBy, maxPrice, verifiedOnly, isContentReady]);
 
   const toggleProvider = (index: number) => {
     setExpandedProvider(expandedProvider === index ? null : index);
@@ -488,7 +534,10 @@ ${providerSummaries}`;
         {!isLoading && !error && apiResponse && (
           <>
             {/* Header */}
-            <div className="mb-8">
+            <div className={cn(
+              "mb-8",
+              isContentReady ? "animate-reveal-up" : "opacity-0"
+            )}>
               <span className="badge badge-brand mb-4">
                 <svg className="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -505,24 +554,39 @@ ${providerSummaries}`;
 
             {/* Price Range Summary */}
             {priceRange && (
-              <div className="mb-8 p-6 bg-white rounded-2xl border border-[#E5E7EB]">
+              <div className={cn(
+                "mb-8 p-6 bg-white rounded-2xl border border-[#E5E7EB]",
+                isContentReady ? "animate-reveal-up delay-1" : "opacity-0"
+              )}>
                 <div className="grid grid-cols-3 gap-6 mb-6">
                   <div>
                     <p className="text-xs text-[#6B7280] mb-1">Lowest</p>
-                    <p className="text-2xl md:text-3xl font-medium text-[#5A9A6B] tabular-nums">{formatCurrency(priceRange.min)}</p>
+                    <p className={cn(
+                      "text-2xl md:text-3xl font-medium text-[#5A9A6B] tabular-nums",
+                      isContentReady ? "animate-number delay-2" : "opacity-0"
+                    )}>{formatCurrency(priceRange.min)}</p>
                   </div>
                   <div className="text-center">
                     <p className="text-xs text-[#6B7280] mb-1">Average</p>
-                    <p className="text-2xl md:text-3xl font-medium text-[#17270C] tabular-nums">{formatCurrency(priceRange.avg)}</p>
+                    <p className={cn(
+                      "text-2xl md:text-3xl font-medium text-[#17270C] tabular-nums",
+                      isContentReady ? "animate-number delay-3" : "opacity-0"
+                    )}>{formatCurrency(priceRange.avg)}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-xs text-[#6B7280] mb-1">Highest</p>
-                    <p className="text-2xl md:text-3xl font-medium text-[#6B7280] tabular-nums">{formatCurrency(priceRange.max)}</p>
+                    <p className={cn(
+                      "text-2xl md:text-3xl font-medium text-[#6B7280] tabular-nums",
+                      isContentReady ? "animate-number delay-4" : "opacity-0"
+                    )}>{formatCurrency(priceRange.max)}</p>
                   </div>
                 </div>
                 <div className="pt-4 border-t border-[#E5E7EB] flex items-center justify-between">
                   <span className="text-sm text-[#6B7280]">Potential savings</span>
-                  <span className="text-xl font-medium text-[#5A9A6B] tabular-nums">
+                  <span className={cn(
+                    "text-xl font-medium text-[#5A9A6B] tabular-nums",
+                    isContentReady ? "animate-number delay-5" : "opacity-0"
+                  )}>
                     {formatCurrency(priceRange.max - priceRange.min)}
                   </span>
                 </div>
@@ -535,7 +599,10 @@ ${providerSummaries}`;
               <div>
                 {/* Procedure Steps Toggle */}
                 {mainSteps.length > 0 && (
-                  <div className="mb-6">
+                  <div className={cn(
+                    "mb-6",
+                    isContentReady ? "animate-reveal-up delay-1" : "opacity-0"
+                  )}>
                     <button
                       onClick={() => setShowSteps(!showSteps)}
                       className="flex items-center gap-2 text-sm text-[#6B7280] hover:text-[#17270C] transition-colors font-medium"
@@ -553,10 +620,11 @@ ${providerSummaries}`;
 
                     {showSteps && (
                       <div className="mt-4 space-y-2">
-                        {mainSteps.map((step) => (
+                        {mainSteps.map((step, stepIndex) => (
                           <div
                             key={step.step_number}
-                            className="flex items-start gap-3 p-4 bg-white rounded-xl border border-[#E5E7EB]"
+                            className="flex items-start gap-3 p-4 bg-white rounded-xl border border-[#E5E7EB] animate-slide-up-soft"
+                            style={{ animationDelay: `${stepIndex * 50}ms` }}
                           >
                             <div className="size-7 bg-[rgba(0,33,37,0.1)] rounded-lg flex items-center justify-center text-sm font-medium text-[#002125] flex-shrink-0">
                               {step.step_number}
@@ -577,7 +645,10 @@ ${providerSummaries}`;
                 )}
 
                 {/* Filters & Sort Controls */}
-                <div className="mb-4 p-4 bg-white rounded-xl border border-[#E5E7EB]">
+                <div className={cn(
+                  "mb-4 p-4 bg-white rounded-xl border border-[#E5E7EB]",
+                  isContentReady ? "animate-reveal-up delay-2" : "opacity-0"
+                )}>
                   <div className="flex flex-wrap items-center gap-4">
                     {/* Max Price Filter */}
                     <div className="flex items-center gap-2">
@@ -659,6 +730,7 @@ ${providerSummaries}`;
                     const mrfCount = provider.breakdown.filter(b => b.price_type === "MRF").length;
                     const totalItems = provider.breakdown.length;
                     const isLowestPrice = provider.totalCost === priceRange?.min;
+                    const isCardVisible = index < visibleCards;
 
                     return (
                       <div
@@ -667,8 +739,14 @@ ${providerSummaries}`;
                           "bg-white rounded-2xl border overflow-hidden transition-colors",
                           isLowestPrice
                             ? "border-[#5A9A6B]/30 ring-1 ring-[#5A9A6B]/10"
-                            : "border-[#E5E7EB] hover:border-[#E5E7EB]"
+                            : "border-[#E5E7EB] hover:border-[#E5E7EB]",
+                          isCardVisible
+                            ? "provider-card-animate"
+                            : "opacity-0"
                         )}
+                        style={{
+                          animationDelay: isCardVisible ? `${(index % 10) * 80}ms` : undefined
+                        }}
                       >
                         {/* Lowest Price Badge */}
                         {isLowestPrice && (
@@ -735,9 +813,9 @@ ${providerSummaries}`;
 
                         {/* Expanded Details */}
                         {isExpanded && (
-                          <div className="border-t border-[#E5E7EB] p-5 md:p-6 bg-[#F2FBEF]">
+                          <div className="border-t border-[#E5E7EB] p-5 md:p-6 bg-[#F2FBEF] animate-expand-in">
                             {/* Coverage Bar */}
-                            <div className="mb-6 p-4 bg-white rounded-xl border border-[#E5E7EB]">
+                            <div className="mb-6 p-4 bg-white rounded-xl border border-[#E5E7EB] expand-item expand-item-delay-1">
                               <div className="flex items-center justify-between mb-2">
                                 <span className="text-sm text-[#6B7280]">Data Coverage</span>
                                 <span className="text-lg font-medium text-[#17270C] tabular-nums">{provider.coverage.score}%</span>
@@ -754,16 +832,23 @@ ${providerSummaries}`;
                             </div>
 
                             {/* Cost Breakdown */}
-                            <h4 className="text-overline text-[#6B7280] mb-4">Cost Breakdown</h4>
+                            <h4 className="text-overline text-[#6B7280] mb-4 expand-item expand-item-delay-2">Cost Breakdown</h4>
                             <div className="space-y-3">
                               {Array.from(groupedBreakdown.entries())
                                 .sort(([a], [b]) => a - b)
-                                .map(([stepNum, items]) => {
+                                .map(([stepNum, items], stepIndex) => {
                                   const stepDescription = stepToDescription.get(stepNum) || `Step ${stepNum}`;
                                   const stepTotal = items.reduce((sum, item) => sum + item.cost, 0);
+                                  const delayClass = `expand-item-delay-${Math.min(stepIndex + 3, 8)}`;
 
                                   return (
-                                    <div key={stepNum} className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
+                                    <div
+                                      key={stepNum}
+                                      className={cn(
+                                        "bg-white rounded-xl border border-[#E5E7EB] overflow-hidden expand-item",
+                                        delayClass
+                                      )}
+                                    >
                                       <div className="px-4 py-3 border-b border-[#E5E7EB] flex items-center justify-between bg-[#F9FAFB]">
                                         <div className="flex items-center gap-2">
                                           <span className="size-6 bg-[rgba(0,33,37,0.1)] rounded-md flex items-center justify-center text-xs font-medium text-[#002125]">
@@ -819,7 +904,7 @@ ${providerSummaries}`;
                             </div>
 
                             {/* Request Quote Button */}
-                            <div className="mt-6 pt-4 border-t border-[#E5E7EB]">
+                            <div className="mt-6 pt-4 border-t border-[#E5E7EB] expand-item expand-item-delay-6">
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -851,7 +936,10 @@ ${providerSummaries}`;
 
               {/* Right Column: Map */}
               <div className="hidden lg:block">
-                <div className="sticky top-6 h-[calc(100dvh-3rem)]">
+                <div className={cn(
+                  "sticky top-6 h-[calc(100dvh-3rem)]",
+                  isContentReady ? "animate-fade-in delay-3" : "opacity-0"
+                )}>
                   {providers.length > 0 && process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN && (
                     <ProvidersMap
                       providers={providers}

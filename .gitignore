@@ -43,3 +43,5 @@ next-env.d.ts
 
 
 public_prices
+
+package-lock.json

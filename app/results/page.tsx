@@ -4,7 +4,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense, useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import OutreachModal from "@/components/OutreachModal";
-import { ChatPanel } from "@/components/ChatPanel";
+import { ChatPanel, ChatPanelRef } from "@/components/ChatPanel";
 import PriceDistributionChart from "@/components/PriceDistributionChart";
 import { cn } from "@/lib/utils";
 import dynamic from "next/dynamic";
@@ -191,6 +191,9 @@ function ResultsContent() {
   // Animation states
   const [isContentReady, setIsContentReady] = useState(false);
   const [visibleCards, setVisibleCards] = useState(0);
+
+  // Chat panel ref
+  const chatPanelRef = useRef<ChatPanelRef>(null);
 
   const handleShare = async () => {
     const url = window.location.href;
@@ -407,31 +410,34 @@ ${providerSummaries}`;
       <nav className="border-b border-[#E5E7EB] bg-white">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/" className="group">
-            <img
-              src="/justprice-logo.jpeg"
-              alt="JustPrice"
-              className="h-9 w-auto group-hover:opacity-80 transition-opacity"
-            />
+            <span className="text-2xl font-semibold group-hover:opacity-80 transition-opacity">
+              <span className="text-[#17270C]">Just</span>
+              <span className="text-[#5A9A6B]">Price</span>
+            </span>
           </Link>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <button
               onClick={handleShare}
-              className="flex items-center gap-2 text-sm text-[#6B7280] hover:text-[#17270C] transition-colors font-medium"
+              className="btn-primary text-sm"
             >
-              <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-              </svg>
               <span>Share</span>
+              <span className="btn-arrow">
+                <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                </svg>
+              </span>
             </button>
             <button
               onClick={() => router.push("/query")}
-              className="flex items-center gap-2 text-sm text-[#6B7280] hover:text-[#17270C] transition-colors font-medium"
+              className="btn-primary text-sm"
             >
-              <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
               <span>New Search</span>
+              <span className="btn-arrow">
+                <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </span>
             </button>
           </div>
         </div>
@@ -555,7 +561,7 @@ ${providerSummaries}`;
             {/* Price Range Summary */}
             {priceRange && (
               <div className={cn(
-                "mb-8 p-5 bg-white rounded-2xl border border-[#E5E7EB]",
+                "mb-8 p-5 bg-white rounded-2xl border border-[#5A9A6B]/20",
                 isContentReady ? "animate-reveal-up delay-1" : "opacity-0"
               )}>
                 <div className="flex flex-col md:flex-row gap-5">
@@ -580,7 +586,7 @@ ${providerSummaries}`;
                       <div className="text-right">
                         <p className="text-[10px] uppercase tracking-wide text-[#9CA3AF] mb-1">Highest</p>
                         <p className={cn(
-                          "text-lg md:text-xl font-semibold text-[#6B7280] tabular-nums",
+                          "text-lg md:text-xl font-semibold text-[#DC2626] tabular-nums",
                           isContentReady ? "animate-number delay-4" : "opacity-0"
                         )}>{formatCurrency(priceRange.max)}</p>
                       </div>
@@ -621,54 +627,58 @@ ${providerSummaries}`;
             {/* Procedure Steps Timeline */}
             {mainSteps.length > 0 && (
               <div className={cn(
-                "mb-8 p-5 bg-white rounded-2xl border border-[#E5E7EB]",
+                "mb-8",
                 isContentReady ? "animate-reveal-up delay-2" : "opacity-0"
               )}>
-                <p className="text-xs text-[#6B7280] mb-4">Procedure Steps</p>
-                <div className="relative">
-                  {/* Timeline connector line */}
-                  <div className="absolute top-4 left-0 right-0 h-0.5 bg-gradient-to-r from-[#5A9A6B] via-[#3B7A57] to-[#5A9A6B] opacity-30" />
-
-                  {/* Steps */}
-                  <div className="relative flex justify-between">
-                    {mainSteps.map((step, index) => (
+                <p className="text-xs text-[#6B7280] mb-3">Procedure Steps</p>
+                <div className="relative flex items-stretch gap-3 overflow-x-auto pb-2">
+                  {mainSteps.map((step, index) => (
+                    <div key={step.step_number} className="flex items-center">
+                      {/* Step Card */}
                       <div
-                        key={step.step_number}
-                        className={cn(
-                          "flex flex-col items-center text-center",
-                          index === 0 && "items-start text-left",
-                          index === mainSteps.length - 1 && "items-end text-right"
-                        )}
-                        style={{
-                          flex: index === 0 || index === mainSteps.length - 1 ? '0 0 auto' : '1',
-                          maxWidth: index === 0 || index === mainSteps.length - 1 ? '20%' : `${60 / (mainSteps.length - 2)}%`
-                        }}
+                        className="group relative flex flex-col w-[180px] min-h-[140px] p-4 bg-white rounded-xl border border-[#5A9A6B]/20 hover:border-[#5A9A6B]/50 hover:shadow-md transition-all cursor-default"
+                        style={{ animationDelay: `${index * 80}ms` }}
                       >
-                        {/* Step circle */}
-                        <div
-                          className={cn(
-                            "relative z-10 size-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all",
-                            "bg-[#5A9A6B] text-white shadow-sm"
+                        {/* Step number badge */}
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="size-7 rounded-full bg-[#5A9A6B] text-white flex items-center justify-center text-sm font-semibold">
+                            {step.step_number}
+                          </div>
+                          {step.probability < 1 && (
+                            <span className="text-[10px] text-[#9CA3AF] bg-[#F3F4F6] px-1.5 py-0.5 rounded-full">
+                              {Math.round(step.probability * 100)}%
+                            </span>
                           )}
-                          style={{ animationDelay: `${index * 100}ms` }}
-                        >
-                          {step.step_number}
                         </div>
 
                         {/* Step description */}
-                        <div className="mt-3 max-w-[140px]">
-                          <p className="text-xs text-[#17270C] font-medium leading-tight line-clamp-2">
-                            {step.description}
-                          </p>
-                          {step.probability < 1 && (
-                            <p className="text-[10px] text-[#9CA3AF] mt-1">
-                              {Math.round(step.probability * 100)}% likely
-                            </p>
-                          )}
-                        </div>
+                        <p className="text-sm text-[#17270C] font-medium leading-snug flex-1 line-clamp-3">
+                          {step.description}
+                        </p>
+
+                        {/* AI Button */}
+                        <button
+                          onClick={() => chatPanelRef.current?.askQuestion(`What happens during the "${step.description}" step of this procedure?`)}
+                          className="mt-3 flex items-center gap-1.5 text-[11px] text-[#6B7280] hover:text-[#5A9A6B] transition-colors opacity-0 group-hover:opacity-100"
+                        >
+                          <svg className="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
+                          </svg>
+                          Ask AI
+                        </button>
                       </div>
-                    ))}
-                  </div>
+
+                      {/* Connector arrow */}
+                      {index < mainSteps.length - 1 && (
+                        <div className="flex items-center px-1">
+                          <div className="w-4 h-0.5 bg-[#E5E7EB]" />
+                          <svg className="size-3 text-[#D1D5DB] -ml-0.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
@@ -679,7 +689,7 @@ ${providerSummaries}`;
               <div>
                 {/* Filters & Sort Controls */}
                 <div className={cn(
-                  "mb-4 p-4 bg-white rounded-xl border border-[#E5E7EB]",
+                  "mb-4 p-4 bg-white rounded-xl border border-[#5A9A6B]/20",
                   isContentReady ? "animate-reveal-up delay-2" : "opacity-0"
                 )}>
                   <div className="flex flex-wrap items-center gap-4">
@@ -752,7 +762,7 @@ ${providerSummaries}`;
                 {/* Provider Results */}
                 <div className="space-y-3">
                   {providers.length === 0 && (
-                    <div className="py-12 text-center bg-white rounded-2xl border border-[#E5E7EB]">
+                    <div className="py-12 text-center bg-white rounded-2xl border border-[#5A9A6B]/20">
                       <p className="text-[#6B7280]">No provider pricing data available.</p>
                     </div>
                   )}
@@ -771,8 +781,8 @@ ${providerSummaries}`;
                         className={cn(
                           "bg-white rounded-2xl border overflow-hidden transition-colors",
                           isLowestPrice
-                            ? "border-[#5A9A6B]/30 ring-1 ring-[#5A9A6B]/10"
-                            : "border-[#E5E7EB] hover:border-[#E5E7EB]",
+                            ? "border-[#5A9A6B]/50 ring-1 ring-[#5A9A6B]/20"
+                            : "border-[#5A9A6B]/20 hover:border-[#5A9A6B]/40",
                           isCardVisible
                             ? "provider-card-animate"
                             : "opacity-0"
@@ -825,7 +835,15 @@ ${providerSummaries}`;
                             <div className="text-right">
                               <p className={cn(
                                 "text-2xl font-medium tabular-nums",
-                                isLowestPrice ? "text-[#5A9A6B]" : "text-[#17270C]"
+                                isLowestPrice
+                                  ? "text-[#5A9A6B]"
+                                  : priceRange && provider.totalCost >= priceRange.max * 0.9
+                                    ? "text-[#DC2626]"
+                                    : priceRange && provider.totalCost >= priceRange.avg * 1.15
+                                      ? "text-[#EA580C]"
+                                      : priceRange && provider.totalCost <= priceRange.avg * 0.85
+                                        ? "text-[#5A9A6B]"
+                                        : "text-[#17270C]"
                               )}>
                                 {formatCurrency(provider.totalCost)}
                               </p>
@@ -970,7 +988,7 @@ ${providerSummaries}`;
               {/* Right Column: Map */}
               <div className="hidden lg:block">
                 <div className={cn(
-                  "sticky top-6 h-[calc(100dvh-3rem)]",
+                  "sticky top-6 h-[calc(100dvh-3rem)] rounded-2xl border border-[#5A9A6B]/20 overflow-hidden",
                   isContentReady ? "animate-fade-in delay-3" : "opacity-0"
                 )}>
                   {providers.length > 0 && process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN && (
@@ -1001,7 +1019,7 @@ ${providerSummaries}`;
             </div>
 
             {/* Chat Panel */}
-            <ChatPanel context={chatContext} />
+            <ChatPanel ref={chatPanelRef} context={chatContext} />
           </>
         )}
 

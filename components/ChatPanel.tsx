@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from "react";
 import { cn } from "@/lib/utils";
 
 interface Message {
@@ -13,8 +13,14 @@ interface ChatPanelProps {
   context: string;
 }
 
-export function ChatPanel({ context }: ChatPanelProps) {
-  const [isOpen, setIsOpen] = useState(false);
+export interface ChatPanelRef {
+  open: () => void;
+  sendMessage: (message: string) => void;
+  askQuestion: (question: string) => void;
+}
+
+export const ChatPanel = forwardRef<ChatPanelRef, ChatPanelProps>(function ChatPanel({ context }, ref) {
+  const [isOpen, setIsOpen] = useState(true);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -100,6 +106,20 @@ export function ChatPanel({ context }: ChatPanelProps) {
     },
     [context, isLoading, messages]
   );
+
+  // Expose methods to parent via ref
+  useImperativeHandle(ref, () => ({
+    open: () => setIsOpen(true),
+    sendMessage: (message: string) => {
+      setIsOpen(true);
+      // Small delay to ensure panel is open before sending
+      setTimeout(() => sendMessage(message), 100);
+    },
+    askQuestion: (question: string) => {
+      setIsOpen(true);
+      setTimeout(() => sendMessage(question), 100);
+    },
+  }), [sendMessage]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -231,7 +251,7 @@ export function ChatPanel({ context }: ChatPanelProps) {
       )}
     </>
   );
-}
+});
 
 function SuggestedQuestion({
   text,

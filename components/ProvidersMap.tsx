@@ -277,7 +277,7 @@ export default function ProvidersMap({
         mapboxAccessToken={mapboxToken}
         initialViewState={initialViewState}
         style={{ width: "100%", height: "100%" }}
-        mapStyle="mapbox://styles/mapbox/light-v11"
+        mapStyle="mapbox://styles/shjavokhir/cmkdbfpwy003401sufqir3v6f"
         attributionControl={false}
         onMove={onMapMove}
         onLoad={onMapLoad}

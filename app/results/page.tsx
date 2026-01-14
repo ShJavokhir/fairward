@@ -188,9 +188,11 @@ function ResultsContent() {
   const [outreachProvider, setOutreachProvider] = useState<ProviderResult | null>(null);
   const [showShareToast, setShowShareToast] = useState(false);
 
-  // Animation states
+  // Animation states - sequential top-to-bottom reveal
   const [isContentReady, setIsContentReady] = useState(false);
   const [visibleCards, setVisibleCards] = useState(0);
+  const [visibleSteps, setVisibleSteps] = useState(0);
+  const [showFilters, setShowFilters] = useState(false);
 
   // Chat panel ref
   const chatPanelRef = useRef<ChatPanelRef>(null);
@@ -261,24 +263,55 @@ function ResultsContent() {
     }
   }, [isLoading, apiResponse, error]);
 
-  // Staggered card reveal animation
+  // Sequential animation cascade: header -> price -> steps -> filters -> cards
   useEffect(() => {
     if (!isContentReady || !apiResponse) return;
 
+    const totalSteps = apiResponse.data?.results?.bundle?.enriched_bundle?.main_steps?.length || 0;
     const totalCards = apiResponse.data?.results?.results?.length || 0;
-    if (totalCards === 0) return;
 
-    // Reveal cards one by one with staggered animation
-    let currentCard = 0;
-    const interval = setInterval(() => {
-      currentCard++;
-      setVisibleCards(currentCard);
-      if (currentCard >= totalCards) {
-        clearInterval(interval);
+    // Timeline: steps start after price range (delay-2 = 300ms + 700ms animation = ~1000ms)
+    // Each step takes 150ms to appear
+    const stepsStartDelay = 800;
+    const stepInterval = 180;
+    const filtersDelay = stepsStartDelay + (totalSteps * stepInterval) + 200;
+    const cardsStartDelay = filtersDelay + 400;
+    const cardInterval = 120;
+
+    // Reveal steps one by one (left to right)
+    let stepTimer: ReturnType<typeof setTimeout>;
+    let stepCount = 0;
+
+    stepTimer = setTimeout(function revealStep() {
+      if (stepCount < totalSteps) {
+        stepCount++;
+        setVisibleSteps(stepCount);
+        stepTimer = setTimeout(revealStep, stepInterval);
       }
-    }, 80); // 80ms between each card
+    }, stepsStartDelay);
 
-    return () => clearInterval(interval);
+    // Show filters after steps complete
+    const filterTimer = setTimeout(() => {
+      setShowFilters(true);
+    }, filtersDelay);
+
+    // Reveal cards one by one after filters
+    let cardTimer: ReturnType<typeof setTimeout>;
+    let cardCount = 0;
+
+    cardTimer = setTimeout(function revealCard() {
+      if (cardCount < totalCards) {
+        cardCount++;
+        setVisibleCards(cardCount);
+        cardTimer = setTimeout(revealCard, cardInterval);
+      }
+    }, cardsStartDelay);
+
+    return () => {
+      clearTimeout(stepTimer);
+      clearTimeout(filterTimer);
+      clearTimeout(cardTimer);
+    };
   }, [isContentReady, apiResponse]);
 
   // When filters change after initial load, show all cards instantly
@@ -288,6 +321,8 @@ function ResultsContent() {
     if (hasFiltersChanged.current) {
       // Instant reveal after filter change (no stagger)
       setVisibleCards(999);
+      setVisibleSteps(999);
+      setShowFilters(true);
     }
     hasFiltersChanged.current = true;
   }, [sortBy, maxPrice, verifiedOnly, isContentReady]);
@@ -632,12 +667,16 @@ ${providerSummaries}`;
               )}>
                 <p className="text-xs text-[#6B7280] mb-3">Procedure Steps</p>
                 <div className="relative flex items-stretch gap-3 overflow-x-auto pb-2">
-                  {mainSteps.map((step, index) => (
+                  {mainSteps.map((step, index) => {
+                    const isStepVisible = index < visibleSteps;
+                    return (
                     <div key={step.step_number} className="flex items-center">
                       {/* Step Card */}
                       <div
-                        className="group relative flex flex-col w-[180px] min-h-[140px] p-4 bg-white rounded-xl border border-[#5A9A6B]/20 hover:border-[#5A9A6B]/50 hover:shadow-md transition-all cursor-default"
-                        style={{ animationDelay: `${index * 80}ms` }}
+                        className={cn(
+                          "group relative flex flex-col w-[180px] min-h-[140px] p-4 bg-white rounded-xl border border-[#5A9A6B]/20 hover:border-[#5A9A6B]/50 hover:shadow-md transition-all cursor-default",
+                          isStepVisible ? "step-card-animate" : "opacity-0"
+                        )}
                       >
                         {/* Step number badge */}
                         <div className="flex items-center justify-between mb-3">
@@ -668,9 +707,12 @@ ${providerSummaries}`;
                         </button>
                       </div>
 
-                      {/* Connector arrow */}
+                      {/* Connector arrow - appears with the next step */}
                       {index < mainSteps.length - 1 && (
-                        <div className="flex items-center px-1">
+                        <div className={cn(
+                          "flex items-center px-1 transition-opacity duration-300",
+                          index + 1 < visibleSteps ? "opacity-100" : "opacity-0"
+                        )}>
                           <div className="w-4 h-0.5 bg-[#E5E7EB]" />
                           <svg className="size-3 text-[#D1D5DB] -ml-0.5" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
@@ -678,7 +720,8 @@ ${providerSummaries}`;
                         </div>
                       )}
                     </div>
-                  ))}
+                  );
+                  })}
                 </div>
               </div>
             )}
@@ -690,7 +733,7 @@ ${providerSummaries}`;
                 {/* Filters & Sort Controls */}
                 <div className={cn(
                   "mb-4 p-4 bg-white rounded-xl border border-[#5A9A6B]/20",
-                  isContentReady ? "animate-reveal-up delay-2" : "opacity-0"
+                  showFilters ? "animate-reveal-up" : "opacity-0"
                 )}>
                   <div className="flex flex-wrap items-center gap-4">
                     {/* Max Price Filter */}
@@ -989,7 +1032,7 @@ ${providerSummaries}`;
               <div className="hidden lg:block">
                 <div className={cn(
                   "sticky top-6 h-[calc(100dvh-3rem)] rounded-2xl border border-[#5A9A6B]/20 overflow-hidden",
-                  isContentReady ? "animate-fade-in delay-3" : "opacity-0"
+                  showFilters ? "animate-fade-in" : "opacity-0"
                 )}>
                   {providers.length > 0 && process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN && (
                     <ProvidersMap

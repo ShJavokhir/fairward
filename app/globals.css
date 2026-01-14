@@ -493,6 +493,17 @@ p, .body-text {
   }
 }
 
+@keyframes slide-from-left {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 .animate-fade-in {
   animation: fade-in var(--duration-slow) var(--ease-default) forwards;
 }
@@ -509,33 +520,42 @@ p, .body-text {
   animation: scale-in var(--duration-slow) var(--ease-default) forwards;
 }
 
+/* AI-style reveal: slower, more deliberate top-to-bottom cascade */
 .animate-reveal-up {
-  animation: reveal-up 500ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: reveal-up 700ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .animate-map-reveal {
-  animation: map-reveal 600ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: map-reveal 800ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .animate-number {
-  animation: number-count 400ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: number-count 600ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Slide from left for horizontal elements (like steps) */
+.animate-slide-from-left {
+  opacity: 0;
+  animation: slide-from-left 600ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* Stagger delays - use CSS custom property for dynamic delays */
 [style*="--stagger-delay"] {
-  animation-delay: calc(var(--stagger-delay, 0) * 80ms);
+  animation-delay: calc(var(--stagger-delay, 0) * 150ms);
 }
 
-/* Stagger delays (80ms intervals for smoother cascade) */
+/* Sequential delays (150ms intervals for AI-like generation feel) */
 .delay-0 { animation-delay: 0ms; opacity: 0; }
-.delay-1 { animation-delay: 80ms; opacity: 0; }
-.delay-2 { animation-delay: 160ms; opacity: 0; }
-.delay-3 { animation-delay: 240ms; opacity: 0; }
-.delay-4 { animation-delay: 320ms; opacity: 0; }
-.delay-5 { animation-delay: 400ms; opacity: 0; }
-.delay-6 { animation-delay: 480ms; opacity: 0; }
-.delay-7 { animation-delay: 560ms; opacity: 0; }
-.delay-8 { animation-delay: 640ms; opacity: 0; }
+.delay-1 { animation-delay: 150ms; opacity: 0; }
+.delay-2 { animation-delay: 300ms; opacity: 0; }
+.delay-3 { animation-delay: 450ms; opacity: 0; }
+.delay-4 { animation-delay: 600ms; opacity: 0; }
+.delay-5 { animation-delay: 750ms; opacity: 0; }
+.delay-6 { animation-delay: 900ms; opacity: 0; }
+.delay-7 { animation-delay: 1050ms; opacity: 0; }
+.delay-8 { animation-delay: 1200ms; opacity: 0; }
+.delay-9 { animation-delay: 1350ms; opacity: 0; }
+.delay-10 { animation-delay: 1500ms; opacity: 0; }
 
 /* Legacy delays for compatibility */
 .delay-120 { animation-delay: 120ms; opacity: 0; }
@@ -543,10 +563,16 @@ p, .body-text {
 .delay-360 { animation-delay: 360ms; opacity: 0; }
 .delay-480 { animation-delay: 480ms; opacity: 0; }
 
-/* Provider card stagger animation */
+/* Provider card stagger animation - slower for AI feel */
 .provider-card-animate {
   opacity: 0;
-  animation: reveal-up 500ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: reveal-up 600ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Procedure step cards - slide from left with stagger */
+.step-card-animate {
+  opacity: 0;
+  animation: slide-from-left 550ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* Map container with loading state */

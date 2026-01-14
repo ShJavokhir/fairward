@@ -604,14 +604,12 @@ export default function Home() {
       >
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <Link href="/" className="group">
-            <img
-              src="/justprice-logo.jpeg"
-              alt="JustPrice"
-              className={cn(
-                "h-10 w-auto group-hover:opacity-80 transition-opacity",
-                isScrolled && "brightness-0 invert"
-              )}
-            />
+            <span className={cn(
+              "text-2xl font-semibold group-hover:opacity-80 transition-opacity",
+            )}>
+              <span className={isScrolled ? "text-white" : "text-[#17270C]"}>Just</span>
+              <span className={isScrolled ? "text-[#98FB98]" : "text-[#5A9A6B]"}>Price</span>
+            </span>
           </Link>
 
           <div className="hidden md:flex items-center gap-8">
@@ -1046,11 +1044,10 @@ export default function Home() {
         <div className="max-w-[1280px] mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-8">
             <div>
-              <img
-                src="/justprice-logo.jpeg"
-                alt="JustPrice"
-                className="h-8 w-auto"
-              />
+              <span className="text-xl font-semibold">
+                <span className="text-[#17270C]">Just</span>
+                <span className="text-[#5A9A6B]">Price</span>
+              </span>
             </div>
 
             <p className="text-sm text-[#6B7280] italic font-serif">

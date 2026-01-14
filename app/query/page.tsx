@@ -543,11 +543,10 @@ export default function QueryPage() {
       <nav className="border-b border-[#E5E7EB] bg-white">
         <div className="max-w-2xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/" className="group">
-            <img
-              src="/justprice-logo.jpeg"
-              alt="JustPrice"
-              className="h-9 w-auto group-hover:opacity-80 transition-opacity"
-            />
+            <span className="text-2xl font-semibold group-hover:opacity-80 transition-opacity">
+              <span className="text-[#17270C]">Just</span>
+              <span className="text-[#5A9A6B]">Price</span>
+            </span>
           </Link>
           <Link
             href="/"

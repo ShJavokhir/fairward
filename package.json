@@ -7,7 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "ingest": "bun run --env-file=.env.local scripts/ingest-procedures.ts"
+    "ingest": "bun run --env-file=.env.local scripts/ingest-procedures.ts",
+    "ingest:prices": "bun run --env-file=.env scripts/ingest-hospital-prices.ts",
+    "ingest:prices:dry": "bun run --env-file=.env scripts/ingest-hospital-prices.ts --dry-run --verbose",
+    "ingest:prices:stats": "bun run --env-file=.env scripts/ingest-hospital-prices.ts --stats"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.9",

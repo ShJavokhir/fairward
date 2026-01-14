@@ -46,3 +46,24 @@ export async function getDatabase(dbName: string = "main"): Promise<Db> {
   const client = await getClientPromise();
   return client.db(dbName);
 }
+
+/**
+ * Close the MongoDB connection
+ * Call this when your script/process is done to allow graceful exit
+ */
+export async function closeConnection(): Promise<void> {
+  try {
+    if (global._mongoClientPromise) {
+      const client = await global._mongoClientPromise;
+      await client.close();
+      global._mongoClientPromise = undefined;
+    }
+    if (clientPromise) {
+      const client = await clientPromise;
+      await client.close();
+      clientPromise = null;
+    }
+  } catch (error) {
+    // Ignore errors during close
+  }
+}

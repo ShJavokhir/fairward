@@ -5,6 +5,7 @@ import { Suspense, useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import OutreachModal from "@/components/OutreachModal";
 import { ChatPanel } from "@/components/ChatPanel";
+import PriceDistributionChart from "@/components/PriceDistributionChart";
 import { cn } from "@/lib/utils";
 import dynamic from "next/dynamic";
 
@@ -184,7 +185,6 @@ function ResultsContent() {
   const [error, setError] = useState<string | null>(null);
   const [expandedProvider, setExpandedProvider] = useState<number | null>(null);
   const [sortBy, setSortBy] = useState<SortOption>("price_low");
-  const [showSteps, setShowSteps] = useState(false);
   const [outreachProvider, setOutreachProvider] = useState<ProviderResult | null>(null);
   const [showShareToast, setShowShareToast] = useState(false);
 
@@ -555,40 +555,120 @@ ${providerSummaries}`;
             {/* Price Range Summary */}
             {priceRange && (
               <div className={cn(
-                "mb-8 p-6 bg-white rounded-2xl border border-[#E5E7EB]",
+                "mb-8 p-5 bg-white rounded-2xl border border-[#E5E7EB]",
                 isContentReady ? "animate-reveal-up delay-1" : "opacity-0"
               )}>
-                <div className="grid grid-cols-3 gap-6 mb-6">
-                  <div>
-                    <p className="text-xs text-[#6B7280] mb-1">Lowest</p>
-                    <p className={cn(
-                      "text-2xl md:text-3xl font-medium text-[#5A9A6B] tabular-nums",
-                      isContentReady ? "animate-number delay-2" : "opacity-0"
-                    )}>{formatCurrency(priceRange.min)}</p>
+                <div className="flex flex-col md:flex-row gap-5">
+                  {/* Left: Price Stats */}
+                  <div className="flex-1 flex flex-col">
+                    <p className="text-xs text-[#6B7280] mb-3">Price Range</p>
+                    <div className="grid grid-cols-3 gap-3 flex-1">
+                      <div>
+                        <p className="text-[10px] uppercase tracking-wide text-[#9CA3AF] mb-1">Lowest</p>
+                        <p className={cn(
+                          "text-lg md:text-xl font-semibold text-[#5A9A6B] tabular-nums",
+                          isContentReady ? "animate-number delay-2" : "opacity-0"
+                        )}>{formatCurrency(priceRange.min)}</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-[10px] uppercase tracking-wide text-[#9CA3AF] mb-1">Average</p>
+                        <p className={cn(
+                          "text-lg md:text-xl font-semibold text-[#17270C] tabular-nums",
+                          isContentReady ? "animate-number delay-3" : "opacity-0"
+                        )}>{formatCurrency(priceRange.avg)}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[10px] uppercase tracking-wide text-[#9CA3AF] mb-1">Highest</p>
+                        <p className={cn(
+                          "text-lg md:text-xl font-semibold text-[#6B7280] tabular-nums",
+                          isContentReady ? "animate-number delay-4" : "opacity-0"
+                        )}>{formatCurrency(priceRange.max)}</p>
+                      </div>
+                    </div>
+                    <div className="mt-3 pt-3 border-t border-[#E5E7EB] flex items-center justify-between">
+                      <span className="text-xs text-[#6B7280]">Potential savings</span>
+                      <span className={cn(
+                        "text-base font-semibold text-[#5A9A6B] tabular-nums",
+                        isContentReady ? "animate-number delay-5" : "opacity-0"
+                      )}>
+                        {formatCurrency(priceRange.max - priceRange.min)}
+                      </span>
+                    </div>
                   </div>
-                  <div className="text-center">
-                    <p className="text-xs text-[#6B7280] mb-1">Average</p>
-                    <p className={cn(
-                      "text-2xl md:text-3xl font-medium text-[#17270C] tabular-nums",
-                      isContentReady ? "animate-number delay-3" : "opacity-0"
-                    )}>{formatCurrency(priceRange.avg)}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs text-[#6B7280] mb-1">Highest</p>
-                    <p className={cn(
-                      "text-2xl md:text-3xl font-medium text-[#6B7280] tabular-nums",
-                      isContentReady ? "animate-number delay-4" : "opacity-0"
-                    )}>{formatCurrency(priceRange.max)}</p>
+
+                  {/* Divider */}
+                  <div className="hidden md:block w-px bg-[#E5E7EB]" />
+
+                  {/* Right: Distribution Chart */}
+                  <div className="flex-1 flex flex-col">
+                    <p className="text-xs text-[#6B7280] mb-3">Price Distribution</p>
+                    <div className={cn(
+                      "flex-1 min-h-[100px]",
+                      isContentReady ? "animate-reveal-up delay-3" : "opacity-0"
+                    )}>
+                      <PriceDistributionChart
+                        prices={providers.map(p => p.totalCost)}
+                        min={priceRange.min}
+                        max={priceRange.max}
+                        avg={priceRange.avg}
+                      />
+                    </div>
                   </div>
                 </div>
-                <div className="pt-4 border-t border-[#E5E7EB] flex items-center justify-between">
-                  <span className="text-sm text-[#6B7280]">Potential savings</span>
-                  <span className={cn(
-                    "text-xl font-medium text-[#5A9A6B] tabular-nums",
-                    isContentReady ? "animate-number delay-5" : "opacity-0"
-                  )}>
-                    {formatCurrency(priceRange.max - priceRange.min)}
-                  </span>
+              </div>
+            )}
+
+            {/* Procedure Steps Timeline */}
+            {mainSteps.length > 0 && (
+              <div className={cn(
+                "mb-8 p-5 bg-white rounded-2xl border border-[#E5E7EB]",
+                isContentReady ? "animate-reveal-up delay-2" : "opacity-0"
+              )}>
+                <p className="text-xs text-[#6B7280] mb-4">Procedure Steps</p>
+                <div className="relative">
+                  {/* Timeline connector line */}
+                  <div className="absolute top-4 left-0 right-0 h-0.5 bg-gradient-to-r from-[#5A9A6B] via-[#3B7A57] to-[#5A9A6B] opacity-30" />
+
+                  {/* Steps */}
+                  <div className="relative flex justify-between">
+                    {mainSteps.map((step, index) => (
+                      <div
+                        key={step.step_number}
+                        className={cn(
+                          "flex flex-col items-center text-center",
+                          index === 0 && "items-start text-left",
+                          index === mainSteps.length - 1 && "items-end text-right"
+                        )}
+                        style={{
+                          flex: index === 0 || index === mainSteps.length - 1 ? '0 0 auto' : '1',
+                          maxWidth: index === 0 || index === mainSteps.length - 1 ? '20%' : `${60 / (mainSteps.length - 2)}%`
+                        }}
+                      >
+                        {/* Step circle */}
+                        <div
+                          className={cn(
+                            "relative z-10 size-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all",
+                            "bg-[#5A9A6B] text-white shadow-sm"
+                          )}
+                          style={{ animationDelay: `${index * 100}ms` }}
+                        >
+                          {step.step_number}
+                        </div>
+
+                        {/* Step description */}
+                        <div className="mt-3 max-w-[140px]">
+                          <p className="text-xs text-[#17270C] font-medium leading-tight line-clamp-2">
+                            {step.description}
+                          </p>
+                          {step.probability < 1 && (
+                            <p className="text-[10px] text-[#9CA3AF] mt-1">
+                              {Math.round(step.probability * 100)}% likely
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
@@ -597,53 +677,6 @@ ${providerSummaries}`;
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Left Column: Provider List */}
               <div>
-                {/* Procedure Steps Toggle */}
-                {mainSteps.length > 0 && (
-                  <div className={cn(
-                    "mb-6",
-                    isContentReady ? "animate-reveal-up delay-1" : "opacity-0"
-                  )}>
-                    <button
-                      onClick={() => setShowSteps(!showSteps)}
-                      className="flex items-center gap-2 text-sm text-[#6B7280] hover:text-[#17270C] transition-colors font-medium"
-                    >
-                      <svg
-                        className={cn("size-4 transition-transform", showSteps && "rotate-180")}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                      {showSteps ? "Hide" : "Show"} procedure steps ({mainSteps.length})
-                    </button>
-
-                    {showSteps && (
-                      <div className="mt-4 space-y-2">
-                        {mainSteps.map((step, stepIndex) => (
-                          <div
-                            key={step.step_number}
-                            className="flex items-start gap-3 p-4 bg-white rounded-xl border border-[#E5E7EB] animate-slide-up-soft"
-                            style={{ animationDelay: `${stepIndex * 50}ms` }}
-                          >
-                            <div className="size-7 bg-[rgba(0,33,37,0.1)] rounded-lg flex items-center justify-center text-sm font-medium text-[#002125] flex-shrink-0">
-                              {step.step_number}
-                            </div>
-                            <div className="flex-1">
-                              <p className="text-[#17270C]">{step.description}</p>
-                              {step.probability < 1 && (
-                                <p className="text-xs text-[#6B7280] mt-1">
-                                  {Math.round(step.probability * 100)}% likelihood
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
                 {/* Filters & Sort Controls */}
                 <div className={cn(
                   "mb-4 p-4 bg-white rounded-xl border border-[#E5E7EB]",

@@ -221,8 +221,7 @@ ${rawText}
 Respond with ONLY the JSON object, no other text.`,
     });
 
-    const jsonStr = extractJSON(result.text);
-    const parsed = JSON.parse(jsonStr);
+    const parsed = JSON.parse(extractJSON(result.text));
     return schema.parse(parsed) as ParsedBill;
   } catch (error) {
     console.error("parseBillStructure error:", error);
@@ -288,8 +287,7 @@ Be conservative - only flag as "high" if clearly inflated. Common fair price ran
 Respond with ONLY the JSON object, no other text.`,
     });
 
-    const jsonStr = extractJSON(result.text);
-    const parsed = JSON.parse(jsonStr);
+    const parsed = JSON.parse(extractJSON(result.text));
     const validated = schema.parse(parsed);
 
     // Merge benchmark data with original items
@@ -392,8 +390,7 @@ Be conservative - only flag clear issues. Don't flag if uncertain.
 Respond with ONLY the JSON object, no other text.`,
     });
 
-    const jsonStr = extractJSON(result.text);
-    const parsed = JSON.parse(jsonStr);
+    const parsed = JSON.parse(extractJSON(result.text));
     const validated = schema.parse(parsed);
 
     // Add bounding boxes (simplified - center of page for now)

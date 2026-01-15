@@ -8,6 +8,10 @@ interface CaseDocumentModalProps {
   onClose: () => void;
   documentContent: string;
   providerName?: string;
+  savingsAmount?: number;
+  paymentComplete?: boolean;
+  onPayClick?: () => void;
+  onAutopilotClick?: () => void;
 }
 
 export default function CaseDocumentModal({
@@ -15,6 +19,10 @@ export default function CaseDocumentModal({
   onClose,
   documentContent,
   providerName,
+  savingsAmount = 0,
+  paymentComplete = false,
+  onPayClick,
+  onAutopilotClick,
 }: CaseDocumentModalProps) {
   const [copySuccess, setCopySuccess] = useState(false);
 
@@ -170,45 +178,89 @@ export default function CaseDocumentModal({
         </div>
 
         {/* Footer with actions */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-[#E5E7EB] bg-white">
-          <p className="text-sm text-[#6B7280]">
-            Remember to fill in [YOUR NAME] and contact details
-          </p>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handleCopy}
-              className={cn(
-                "flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all",
-                "border border-[#E5E7EB] bg-white hover:bg-[#F2FBEF]",
-                copySuccess && "bg-[#5A9A6B] text-white border-[#5A9A6B] hover:bg-[#5A9A6B]"
-              )}
-            >
-              {copySuccess ? (
-                <>
+        <div className="px-6 py-4 border-t border-[#E5E7EB] bg-white space-y-4">
+          {/* Primary actions row */}
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-[#6B7280]">
+              Remember to fill in [YOUR NAME] and contact details
+            </p>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleCopy}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all",
+                  "border border-[#E5E7EB] bg-white hover:bg-[#F2FBEF]",
+                  copySuccess && "bg-[#5A9A6B] text-white border-[#5A9A6B] hover:bg-[#5A9A6B]"
+                )}
+              >
+                {copySuccess ? (
+                  <>
+                    <svg className="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <svg className="size-5 text-[#6B7280]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    <span>Copy</span>
+                  </>
+                )}
+              </button>
+              <button
+                onClick={handleDownload}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all bg-[#002125] text-white hover:bg-[#012E33]"
+              >
+                <svg className="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                <span>Download</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Support actions row - only show if there are savings */}
+          {savingsAmount > 0 && (
+            <div className="flex items-center gap-3 pt-3 border-t border-[#E5E7EB]">
+              {/* Pay if You Saved */}
+              {paymentComplete ? (
+                <div className="flex items-center gap-2 px-4 py-2.5 bg-[#F2FBEF] text-[#5A9A6B] rounded-xl">
                   <svg className="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
-                  <span>Copied!</span>
-                </>
+                  <span className="font-medium">Thanks for your support!</span>
+                </div>
               ) : (
-                <>
-                  <svg className="size-5 text-[#6B7280]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                <button
+                  onClick={onPayClick}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all bg-[#0052FF] text-white hover:bg-[#0040CC]"
+                >
+                  <svg className="size-5" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z" />
                   </svg>
-                  <span>Copy to Clipboard</span>
-                </>
+                  <span>Pay if You Saved</span>
+                </button>
               )}
-            </button>
-            <button
-              onClick={handleDownload}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all bg-[#002125] text-white hover:bg-[#012E33]"
-            >
-              <svg className="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-              </svg>
-              <span>Download .md</span>
-            </button>
-          </div>
+
+              {/* Autopilot CTA */}
+              <button
+                onClick={onAutopilotClick}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all border border-[#E5E7EB] bg-white hover:bg-[#F9FAFB] group"
+              >
+                <svg className="size-5 text-[#6B7280] group-hover:text-[#17270C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <span className="text-[#6B7280] group-hover:text-[#17270C]">Try Autopilot</span>
+                <span className="text-xs px-1.5 py-0.5 bg-[#FEF3C7] text-[#92400E] rounded-full">Preview</span>
+              </button>
+
+              <p className="ml-auto text-xs text-[#6B7280]">
+                Saved ${savingsAmount.toLocaleString()}? Support our work.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

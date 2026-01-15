@@ -10,6 +10,8 @@ import IssuesPanel from "@/components/bill-buster/IssuesPanel";
 import BillChat from "@/components/bill-buster/BillChat";
 import SummaryBar from "@/components/bill-buster/SummaryBar";
 import CaseDocumentModal from "@/components/bill-buster/CaseDocumentModal";
+import PaymentModal from "@/components/bill-buster/PaymentModal";
+import AutopilotModal from "@/components/bill-buster/AutopilotModal";
 import type { BillAnalysis, AnalysisStage, Issue } from "@/lib/types/bill-analysis";
 import { ANALYSIS_STAGES } from "@/lib/types/bill-analysis";
 import { buildInitialChatMessage } from "@/lib/bill-analysis-client";
@@ -36,6 +38,9 @@ export default function BillBusterPage() {
   const [caseDocument, setCaseDocument] = useState<string>("");
   const [isGeneratingCase, setIsGeneratingCase] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentComplete, setPaymentComplete] = useState(false);
+  const [showAutopilotModal, setShowAutopilotModal] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -138,6 +143,11 @@ export default function BillBusterPage() {
       setIsGeneratingCase(false);
     }
   }, [analysis]);
+
+  const handlePaymentComplete = useCallback(() => {
+    setPaymentComplete(true);
+    setShowPaymentModal(false);
+  }, []);
 
   const currentStage = ANALYSIS_STAGES[analysisStage];
 
@@ -462,6 +472,32 @@ export default function BillBusterPage() {
             onClose={() => setIsModalOpen(false)}
             documentContent={caseDocument}
             providerName={analysis.provider.name || undefined}
+            savingsAmount={analysis.totals.potentialSavings.max}
+            paymentComplete={paymentComplete}
+            onPayClick={() => {
+              setIsModalOpen(false);
+              setShowPaymentModal(true);
+            }}
+            onAutopilotClick={() => {
+              setIsModalOpen(false);
+              setShowAutopilotModal(true);
+            }}
+          />
+
+          {/* Payment Modal */}
+          <PaymentModal
+            isOpen={showPaymentModal}
+            onClose={() => setShowPaymentModal(false)}
+            onPaymentComplete={handlePaymentComplete}
+            savingsAmount={analysis.totals.potentialSavings.max}
+          />
+
+          {/* Autopilot Modal */}
+          <AutopilotModal
+            isOpen={showAutopilotModal}
+            onClose={() => setShowAutopilotModal(false)}
+            providerName={analysis.provider.name || undefined}
+            savingsAmount={analysis.totals.potentialSavings.max}
           />
         </>
       )}

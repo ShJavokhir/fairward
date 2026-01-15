@@ -179,9 +179,9 @@ export default function BillChat({ billAnalysis, initialMessage }: BillChatProps
   ];
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
+    <div className="flex flex-col h-full bg-white rounded-2xl border border-[#5A9A6B]/20 overflow-hidden">
       {/* Header */}
-      <div className="flex-shrink-0 px-4 py-3 border-b border-[#E5E7EB] bg-[#F9FAFB]">
+      <div className="flex-shrink-0 px-4 py-3 border-b border-[#E5E7EB] bg-[#F2FBEF]">
         <div className="flex items-center gap-2">
           <div className="size-8 bg-[#002125] rounded-lg flex items-center justify-center">
             <svg className="size-4 text-[#98FB98]" fill="none" stroke="currentColor" viewBox="0 0 24 24">

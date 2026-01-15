@@ -11,6 +11,11 @@ import {
   ACCEPTED_FILE_TYPES,
   GENERAL_TIPS,
 } from "@/lib/types/bill-analysis";
+import {
+  hashFileContent,
+  getCachedAnalysis,
+  setCachedAnalysis,
+} from "@/lib/analysis-cache";
 
 export const maxDuration = 60; // Allow up to 60s for full analysis
 
@@ -59,6 +64,24 @@ export async function POST(req: NextRequest) {
     // Convert file to base64
     const arrayBuffer = await file.arrayBuffer();
     const base64 = Buffer.from(arrayBuffer).toString("base64");
+
+    // Check cache first
+    const fileHash = hashFileContent(base64);
+    const cachedResult = getCachedAnalysis(fileHash);
+    if (cachedResult) {
+      timing.total_ms = performance.now() - startTime;
+      const response: AnalyzeResponse = {
+        success: true,
+        data: cachedResult,
+        timing,
+      };
+      return NextResponse.json(response, {
+        headers: {
+          "X-Cache": "HIT",
+          "X-Total-Time-Ms": timing.total_ms.toFixed(0),
+        },
+      });
+    }
 
     // Step 1: OCR - Extract text from image
     const ocrStart = performance.now();
@@ -169,6 +192,9 @@ export async function POST(req: NextRequest) {
 
     timing.total_ms = performance.now() - startTime;
 
+    // Cache the result
+    setCachedAnalysis(fileHash, analysis);
+
     const response: AnalyzeResponse = {
       success: true,
       data: analysis,
@@ -177,6 +203,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(response, {
       headers: {
+        "X-Cache": "MISS",
         "X-OCR-Time-Ms": timing.ocr_ms.toFixed(0),
         "X-Parse-Time-Ms": timing.parse_ms.toFixed(0),
         "X-Benchmark-Time-Ms": timing.benchmark_ms.toFixed(0),

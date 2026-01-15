@@ -41,6 +41,7 @@ export default function BillBusterPage() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentComplete, setPaymentComplete] = useState(false);
   const [showAutopilotModal, setShowAutopilotModal] = useState(false);
+  const [isResultsReady, setIsResultsReady] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -59,16 +60,6 @@ export default function BillBusterPage() {
     setFileUrl(url);
     setFileType(file.type);
 
-    const stages: AnalysisStage[] = ["reading", "parsing", "checking", "benchmarking"];
-    let stageIndex = 0;
-
-    const progressInterval = setInterval(() => {
-      if (stageIndex < stages.length) {
-        setAnalysisStage(stages[stageIndex]);
-        stageIndex++;
-      }
-    }, 2000);
-
     try {
       const formData = new FormData();
       formData.append("file", file);
@@ -78,19 +69,29 @@ export default function BillBusterPage() {
         body: formData,
       });
 
-      clearInterval(progressInterval);
-
       if (!response.ok) {
         const data = await response.json();
         throw new Error(data.error || "Analysis failed");
       }
 
       const data = await response.json();
+      const isCacheHit = response.headers.get("X-Cache") === "HIT";
+
+      // Animate through stages - faster for cache hits
+      const stages: AnalysisStage[] = ["reading", "parsing", "checking", "benchmarking"];
+      const stageDelay = isCacheHit ? 200 : 600; // Fast for cache, slower for real processing
+
+      for (const stage of stages) {
+        setAnalysisStage(stage);
+        await new Promise(resolve => setTimeout(resolve, stageDelay));
+      }
+
       setAnalysis(data.data);
       setAnalysisStage("complete");
       setPageState("results");
+      // Trigger results animations after a brief delay
+      setTimeout(() => setIsResultsReady(true), 50);
     } catch (err) {
-      clearInterval(progressInterval);
       setError(err instanceof Error ? err.message : "Something went wrong");
       setAnalysisStage("error");
       setPageState("error");
@@ -108,6 +109,7 @@ export default function BillBusterPage() {
     setError(null);
     setHighlightedIssueId(null);
     setCaseDocument("");
+    setIsResultsReady(false);
   }, [fileUrl]);
 
   const handleIssueHover = useCallback((issue: Issue | null) => {
@@ -152,7 +154,10 @@ export default function BillBusterPage() {
   const currentStage = ANALYSIS_STAGES[analysisStage];
 
   return (
-    <div className="min-h-dvh bg-[#F9FAFB] text-[#17270C] selection:bg-[#98FB98] selection:text-[#002125]">
+    <div className={cn(
+      "min-h-dvh text-[#17270C] selection:bg-[#98FB98] selection:text-[#002125]",
+      pageState === "empty" ? "bg-white" : "bg-[#F2FBEF]"
+    )}>
       {/* Navigation - matches home page */}
       <nav
         className={cn(
@@ -176,15 +181,48 @@ export default function BillBusterPage() {
             </span>
           </Link>
 
+          {/* Nav Links - hidden on mobile, shown on desktop */}
+          <div className="hidden md:flex items-center gap-8">
+            <Link
+              href="/query"
+              className={cn(
+                "text-sm transition-colors font-medium no-underline",
+                isScrolled || pageState !== "empty" ? "text-[#6B7280] hover:text-[#17270C]" : "text-white/70 hover:text-white"
+              )}
+            >
+              Price Search
+            </Link>
+            <Link
+              href="/bill-buster"
+              className={cn(
+                "text-sm transition-colors font-medium no-underline",
+                isScrolled || pageState !== "empty" ? "text-[#17270C]" : "text-white"
+              )}
+            >
+              Lower My Bill
+            </Link>
+            <Link
+              href="/pricing"
+              className={cn(
+                "text-sm transition-colors font-medium no-underline",
+                isScrolled || pageState !== "empty" ? "text-[#6B7280] hover:text-[#17270C]" : "text-white/70 hover:text-white"
+              )}
+            >
+              Pricing
+            </Link>
+          </div>
+
           {pageState === "results" ? (
             <button
               onClick={handleReset}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#6B7280] hover:text-[#17270C] transition-colors bg-white/80 backdrop-blur-sm rounded-full border border-[#E5E7EB]"
+              className="btn-primary no-underline"
             >
-              <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-              </svg>
-              New Bill
+              <span>New Bill</span>
+              <span className="btn-arrow">
+                <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+              </span>
             </button>
           ) : (
             <Link
@@ -223,10 +261,12 @@ export default function BillBusterPage() {
           <div className="relative flex-1 flex flex-col justify-center pt-16 px-4 sm:px-6">
             <div className="max-w-3xl mx-auto text-center">
               {/* Headline */}
-              <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 text-balance leading-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)]">
+              <h1 className="text-h1 text-white mb-4">
                 Fight your bill.
                 <br />
-                <span className="text-[#98FB98]">Win.</span>
+                <span className="italic">
+                  <span className="text-[#98FB98]">Win.</span>
+                </span>
               </h1>
 
               {/* Subheadline */}
@@ -279,117 +319,124 @@ export default function BillBusterPage() {
       {/* Loading State */}
       {pageState === "loading" && (
         <main className="pt-24 px-4 sm:px-6">
-          <div className="max-w-4xl mx-auto py-16">
-            <div className="text-center mb-12">
-              {/* Animated scan illustration */}
-              <div className="relative w-24 h-24 mx-auto mb-8">
-                <Image
-                  src="/images/bill-buster-scan.jpg"
-                  alt=""
-                  fill
-                  className="object-cover rounded-2xl"
-                />
-                {/* Scanning line animation */}
-                <div className="absolute inset-0 rounded-2xl overflow-hidden">
-                  <div
-                    className="absolute left-0 right-0 h-1 bg-[#98FB98]/60"
-                    style={{
-                      animation: "scan 2s ease-in-out infinite",
-                    }}
-                  />
-                </div>
-                <div className="absolute inset-0 rounded-2xl ring-2 ring-[#002125]/10" />
-              </div>
-
-              <h2 className="text-2xl font-serif text-[#17270C] mb-2">
+          <div className="max-w-7xl mx-auto py-12">
+            {/* Header with badge */}
+            <div className="mb-8 animate-reveal-up">
+              <span className="badge badge-brand mb-4">
+                <svg className="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Bill Analysis
+              </span>
+              <h1 className="text-h2 text-[#17270C] mb-2">
                 Analyzing your bill
-              </h2>
-              <p className="text-[#6B7280] mb-8">
+              </h1>
+              <p className="text-[#6B7280]">
                 {currentStage.message}
               </p>
+            </div>
 
-              {/* Progress bar */}
-              <div className="max-w-sm mx-auto">
-                <div className="h-1.5 bg-[#E5E7EB] rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-[#002125] rounded-full transition-all duration-500 ease-out"
-                    style={{ width: `${currentStage.percent}%` }}
-                  />
-                </div>
-                <p className="text-xs text-[#6B7280] mt-3 tabular-nums">
-                  {currentStage.percent}% complete
-                </p>
+            {/* Progress bar */}
+            <div className="mb-8 p-5 bg-white rounded-2xl border border-[#5A9A6B]/20 animate-reveal-up delay-1">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm text-[#6B7280]">Progress</span>
+                <span className="text-sm font-medium text-[#17270C] tabular-nums">{currentStage.percent}%</span>
+              </div>
+              <div className="progress-bar">
+                <div
+                  className="progress-bar-fill"
+                  style={{ width: `${currentStage.percent}%` }}
+                />
               </div>
             </div>
 
-            {/* Skeleton layout */}
+            {/* Skeleton layout - matches results page structure */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="h-[500px] bg-white rounded-xl border border-[#E5E7EB]">
+              {/* Left: Bill Viewer Skeleton */}
+              <div className="h-[500px] bg-white rounded-2xl border border-[#5A9A6B]/20 animate-reveal-up delay-2">
                 <div className="h-full flex items-center justify-center">
                   <div className="text-center">
-                    <div className="size-12 bg-[#F2FBEF] rounded-xl flex items-center justify-center mx-auto mb-4">
-                      <svg className="size-6 text-[#5A9A6B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
+                    <div className="size-16 bg-[#F2FBEF] rounded-2xl flex items-center justify-center mx-auto mb-4">
+                      <div className="size-6 border-2 border-[#002125] border-t-transparent rounded-full animate-spin" />
                     </div>
                     <p className="text-sm text-[#6B7280]">Processing document...</p>
                   </div>
                 </div>
               </div>
+
+              {/* Right: Issues + Chat Skeleton */}
               <div className="space-y-4">
-                <div className="h-48 bg-white rounded-xl border border-[#E5E7EB] p-6">
+                {/* Issues Skeleton */}
+                <div className="bg-white rounded-2xl border border-[#5A9A6B]/20 p-6 animate-reveal-up delay-3">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="skeleton h-5 w-32" />
+                    <div className="skeleton h-5 w-16 rounded-full" />
+                  </div>
                   <div className="space-y-3">
-                    <div className="h-4 bg-[#F2FBEF] rounded w-1/3" />
-                    <div className="h-3 bg-[#F9FAFB] rounded w-full" />
-                    <div className="h-3 bg-[#F9FAFB] rounded w-2/3" />
+                    <div className="skeleton h-4 w-full" />
+                    <div className="skeleton h-4 w-3/4" />
+                    <div className="skeleton h-4 w-5/6" />
                   </div>
                 </div>
-                <div className="h-48 bg-white rounded-xl border border-[#E5E7EB] p-6">
+
+                {/* Chat Skeleton */}
+                <div className="bg-white rounded-2xl border border-[#5A9A6B]/20 p-6 animate-reveal-up delay-4">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="skeleton size-8 rounded-full" />
+                    <div className="skeleton h-4 w-24" />
+                  </div>
                   <div className="space-y-3">
-                    <div className="h-4 bg-[#F2FBEF] rounded w-1/4" />
-                    <div className="h-3 bg-[#F9FAFB] rounded w-full" />
-                    <div className="h-3 bg-[#F9FAFB] rounded w-3/4" />
+                    <div className="skeleton h-3 w-full" />
+                    <div className="skeleton h-3 w-2/3" />
+                  </div>
+                </div>
+
+                {/* Summary Skeleton */}
+                <div className="bg-white rounded-2xl border border-[#5A9A6B]/20 p-6 animate-reveal-up delay-5">
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <div className="skeleton h-3 w-16 mb-2" />
+                      <div className="skeleton h-6 w-20" />
+                    </div>
+                    <div className="text-center">
+                      <div className="skeleton h-3 w-16 mx-auto mb-2" />
+                      <div className="skeleton h-6 w-20 mx-auto" />
+                    </div>
+                    <div className="text-right">
+                      <div className="skeleton h-3 w-16 ml-auto mb-2" />
+                      <div className="skeleton h-6 w-20 ml-auto" />
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-
-          {/* Scanning animation keyframes */}
-          <style jsx>{`
-            @keyframes scan {
-              0%, 100% { top: 0; opacity: 0; }
-              10% { opacity: 1; }
-              90% { opacity: 1; }
-              100% { top: 100%; opacity: 0; }
-            }
-          `}</style>
         </main>
       )}
 
       {/* Error State */}
       {pageState === "error" && (
         <main className="pt-24 px-4 sm:px-6">
-          <div className="max-w-md mx-auto py-16 text-center">
-            <div className="size-16 bg-[#FEF2F2] rounded-2xl flex items-center justify-center mx-auto mb-6">
-              <svg className="size-8 text-[#DC2626]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="max-w-7xl mx-auto py-24 text-center">
+            <div className="size-16 bg-[rgba(196,123,140,0.1)] rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="size-8 text-[#C47B8C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
             </div>
-            <h2 className="text-2xl font-serif text-[#17270C] mb-3">
-              Something went wrong
-            </h2>
-            <p className="text-[#6B7280] mb-8 text-pretty">
+            <h2 className="text-2xl text-[#17270C] mb-2">Unable to Analyze Bill</h2>
+            <p className="text-[#6B7280] mb-6 text-pretty max-w-md mx-auto">
               {error || "We couldn't analyze your bill. Please try again with a clearer image."}
             </p>
             <button
               onClick={handleReset}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-[#002125] text-[#CEFDCE] rounded-xl font-medium hover:bg-[#012E33] transition-colors"
+              className="btn-primary"
             >
-              <svg className="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              Try Again
+              <span>Try Again</span>
+              <span className="btn-arrow">
+                <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </span>
             </button>
           </div>
         </main>
@@ -411,15 +458,18 @@ export default function BillBusterPage() {
                     fill
                     className="object-cover"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-l from-transparent to-[#F9FAFB]" />
-                  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#F9FAFB]" />
+                  <div className="absolute inset-0 bg-gradient-to-l from-transparent to-[#F2FBEF]" />
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#F2FBEF]" />
                 </div>
               )}
 
               <div className="max-w-7xl mx-auto h-full">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full">
                   {/* Left: Bill Viewer */}
-                  <div className="h-full min-h-0">
+                  <div className={cn(
+                    "h-full min-h-0",
+                    isResultsReady ? "animate-reveal-up" : "opacity-0"
+                  )}>
                     <BillViewer
                       fileUrl={fileUrl}
                       fileType={fileType}
@@ -433,7 +483,10 @@ export default function BillBusterPage() {
                   <div className="flex flex-col gap-3 h-full min-h-0">
                     {/* Issues Panel - compact when issues exist */}
                     {analysis.issues.length > 0 && (
-                      <div className="flex-shrink-0 max-h-[35%] overflow-hidden bg-white rounded-xl border border-[#E5E7EB]">
+                      <div className={cn(
+                        "flex-shrink-0 max-h-[35%] overflow-hidden bg-white rounded-2xl border border-[#5A9A6B]/20",
+                        isResultsReady ? "animate-reveal-up delay-1" : "opacity-0"
+                      )}>
                         <IssuesPanel
                           issues={analysis.issues}
                           generalTips={analysis.generalTips}
@@ -444,7 +497,10 @@ export default function BillBusterPage() {
                     )}
 
                     {/* Chat - fills remaining space */}
-                    <div className="flex-1 min-h-0">
+                    <div className={cn(
+                      "flex-1 min-h-0",
+                      isResultsReady ? "animate-reveal-up delay-2" : "opacity-0"
+                    )}>
                       <BillChat
                         billAnalysis={analysis}
                         initialMessage={buildInitialChatMessage(analysis)}
@@ -456,14 +512,18 @@ export default function BillBusterPage() {
             </main>
 
             {/* Summary Bar - fixed at bottom, part of flex layout */}
-            <SummaryBar
-              totalBilled={analysis.totals.billed}
-              fairEstimate={analysis.totals.fairEstimate}
-              potentialSavings={analysis.totals.potentialSavings}
-              issueCount={analysis.issues.length}
-              onGenerateCase={handleGenerateCase}
-              isGenerating={isGeneratingCase}
-            />
+            <div className={cn(
+              isResultsReady ? "animate-reveal-up delay-3" : "opacity-0"
+            )}>
+              <SummaryBar
+                totalBilled={analysis.totals.billed}
+                fairEstimate={analysis.totals.fairEstimate}
+                potentialSavings={analysis.totals.potentialSavings}
+                issueCount={analysis.issues.length}
+                onGenerateCase={handleGenerateCase}
+                isGenerating={isGeneratingCase}
+              />
+            </div>
           </div>
 
           {/* Case Document Modal */}

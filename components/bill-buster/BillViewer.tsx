@@ -65,7 +65,7 @@ export default function BillViewer({
   const pageIssues = issues.filter((issue) => issue.annotation.boundingBox.page === currentPage);
 
   return (
-    <div className="flex flex-col h-full bg-[#F9FAFB] rounded-xl overflow-hidden border border-[#E5E7EB]">
+    <div className="flex flex-col h-full bg-[#F2FBEF] rounded-2xl overflow-hidden border border-[#5A9A6B]/20">
       {/* Toolbar */}
       <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-[#E5E7EB]">
         <div className="flex items-center gap-2">

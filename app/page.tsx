@@ -631,6 +631,15 @@ export default function Home() {
             >
               Lower My Bill
             </Link>
+            <Link
+              href="/pricing"
+              className={cn(
+                "text-sm transition-colors font-medium no-underline",
+                isScrolled ? "text-white/70 hover:text-white" : "text-[#6B7280] hover:text-[#17270C]"
+              )}
+            >
+              Pricing
+            </Link>
             <a
               href="#approach"
               className={cn(

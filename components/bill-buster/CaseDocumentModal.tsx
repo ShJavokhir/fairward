@@ -6,14 +6,14 @@ import { cn } from "@/lib/utils";
 interface CaseDocumentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  document: string;
+  documentContent: string;
   providerName?: string;
 }
 
 export default function CaseDocumentModal({
   isOpen,
   onClose,
-  document,
+  documentContent,
   providerName,
 }: CaseDocumentModalProps) {
   const [copySuccess, setCopySuccess] = useState(false);
@@ -24,28 +24,28 @@ export default function CaseDocumentModal({
       if (e.key === "Escape") onClose();
     };
     if (isOpen) {
-      document.addEventListener("keydown", handleEscape);
+      window.document.addEventListener("keydown", handleEscape);
       // Prevent body scroll
-      document.body.style.overflow = "hidden";
+      window.document.body.style.overflow = "hidden";
     }
     return () => {
-      document.removeEventListener("keydown", handleEscape);
-      document.body.style.overflow = "";
+      window.document.removeEventListener("keydown", handleEscape);
+      window.document.body.style.overflow = "";
     };
   }, [isOpen, onClose]);
 
   const handleCopy = useCallback(async () => {
     try {
-      await navigator.clipboard.writeText(document);
+      await navigator.clipboard.writeText(documentContent);
       setCopySuccess(true);
       setTimeout(() => setCopySuccess(false), 2000);
     } catch (err) {
       console.error("Failed to copy:", err);
     }
-  }, [document]);
+  }, [documentContent]);
 
   const handleDownload = useCallback(() => {
-    const blob = new Blob([document], { type: "text/markdown" });
+    const blob = new Blob([documentContent], { type: "text/markdown" });
     const url = URL.createObjectURL(blob);
     const a = window.document.createElement("a");
     a.href = url;
@@ -54,7 +54,7 @@ export default function CaseDocumentModal({
     a.click();
     window.document.body.removeChild(a);
     URL.revokeObjectURL(url);
-  }, [document]);
+  }, [documentContent]);
 
   if (!isOpen) return null;
 
@@ -165,7 +165,7 @@ export default function CaseDocumentModal({
         {/* Document content */}
         <div className="flex-1 overflow-y-auto p-6 bg-[#F9FAFB]">
           <div className="bg-white rounded-xl border border-[#E5E7EB] p-8 shadow-sm">
-            {renderMarkdown(document)}
+            {renderMarkdown(documentContent)}
           </div>
         </div>
 

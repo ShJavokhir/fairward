@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
+import ReactMarkdown from "react-markdown";
 import type { BillAnalysis } from "@/lib/types/bill-analysis";
 
 interface Message {
@@ -15,6 +16,53 @@ interface BillChatProps {
   initialMessage: string;
 }
 
+function MarkdownContent({ content }: { content: string }) {
+  return (
+    <ReactMarkdown
+      components={{
+        h1: ({ children }) => (
+          <h1 className="text-lg font-semibold mb-2">{children}</h1>
+        ),
+        h2: ({ children }) => (
+          <h2 className="text-base font-semibold mb-2">{children}</h2>
+        ),
+        h3: ({ children }) => (
+          <h3 className="text-sm font-semibold mb-1">{children}</h3>
+        ),
+        p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+        ul: ({ children }) => (
+          <ul className="list-disc list-inside mb-2 space-y-1">{children}</ul>
+        ),
+        ol: ({ children }) => (
+          <ol className="list-decimal list-inside mb-2 space-y-1">{children}</ol>
+        ),
+        li: ({ children }) => <li className="text-sm">{children}</li>,
+        strong: ({ children }) => (
+          <strong className="font-semibold">{children}</strong>
+        ),
+        em: ({ children }) => <em className="italic">{children}</em>,
+        code: ({ children }) => (
+          <code className="bg-black/5 px-1 py-0.5 rounded text-xs font-mono">
+            {children}
+          </code>
+        ),
+        a: ({ href, children }) => (
+          <a
+            href={href}
+            className="text-[#5A9A6B] underline underline-offset-2"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {children}
+          </a>
+        ),
+      }}
+    >
+      {content}
+    </ReactMarkdown>
+  );
+}
+
 export default function BillChat({ billAnalysis, initialMessage }: BillChatProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -26,7 +74,6 @@ export default function BillChat({ billAnalysis, initialMessage }: BillChatProps
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const scrollToBottom = useCallback(() => {
@@ -40,7 +87,6 @@ export default function BillChat({ billAnalysis, initialMessage }: BillChatProps
   const sendMessage = useCallback(async (text: string) => {
     if (!text.trim() || isLoading) return;
 
-    // Cancel any in-flight request
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
@@ -55,7 +101,6 @@ export default function BillChat({ billAnalysis, initialMessage }: BillChatProps
     setInput("");
     setIsLoading(true);
 
-    // Create placeholder for assistant response
     const assistantId = (Date.now() + 1).toString();
     setMessages((prev) => [
       ...prev,
@@ -136,38 +181,68 @@ export default function BillChat({ billAnalysis, initialMessage }: BillChatProps
   return (
     <div className="flex flex-col h-full bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-[#E5E7EB]">
-        <h3 className="font-semibold text-[#17270C]">Chat with Bill Buster</h3>
+      <div className="flex-shrink-0 px-4 py-3 border-b border-[#E5E7EB] bg-[#F9FAFB]">
+        <div className="flex items-center gap-2">
+          <div className="size-8 bg-[#002125] rounded-lg flex items-center justify-center">
+            <svg className="size-4 text-[#98FB98]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+            </svg>
+          </div>
+          <div>
+            <h3 className="font-medium text-[#17270C] text-sm">Bill Buster AI</h3>
+            <p className="text-xs text-[#6B7280]">Ask questions about your bill</p>
+          </div>
+        </div>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
         {messages.map((message) => (
           <div
             key={message.id}
             className={cn(
-              "flex",
+              "flex gap-3",
               message.role === "user" ? "justify-end" : "justify-start"
             )}
           >
+            {message.role === "assistant" && (
+              <div className="flex-shrink-0 size-7 bg-[#F2FBEF] rounded-full flex items-center justify-center">
+                <svg className="size-4 text-[#5A9A6B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </div>
+            )}
             <div
               className={cn(
-                "max-w-[85%] rounded-2xl px-4 py-3",
+                "max-w-[80%] rounded-2xl px-4 py-3",
                 message.role === "user"
                   ? "bg-[#002125] text-white"
                   : "bg-[#F2FBEF] text-[#17270C]"
               )}
             >
               {message.content ? (
-                <div className="text-sm whitespace-pre-wrap">{message.content}</div>
+                <div className="text-sm">
+                  {message.role === "assistant" ? (
+                    <MarkdownContent content={message.content} />
+                  ) : (
+                    <span>{message.content}</span>
+                  )}
+                </div>
               ) : (
-                <div className="flex items-center gap-1">
-                  <span className="size-2 bg-[#002125] rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                  <span className="size-2 bg-[#002125] rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                  <span className="size-2 bg-[#002125] rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                <div className="flex items-center gap-1 py-1">
+                  <span className="size-2 bg-[#5A9A6B] rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                  <span className="size-2 bg-[#5A9A6B] rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                  <span className="size-2 bg-[#5A9A6B] rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
                 </div>
               )}
             </div>
+            {message.role === "user" && (
+              <div className="flex-shrink-0 size-7 bg-[#002125] rounded-full flex items-center justify-center">
+                <svg className="size-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+            )}
           </div>
         ))}
         <div ref={messagesEndRef} />
@@ -175,7 +250,7 @@ export default function BillChat({ billAnalysis, initialMessage }: BillChatProps
 
       {/* Suggested questions (show only when few messages) */}
       {messages.length <= 2 && (
-        <div className="px-4 pb-2">
+        <div className="flex-shrink-0 px-4 pb-2">
           <div className="flex flex-wrap gap-2">
             {suggestedQuestions.map((q) => (
               <button
@@ -192,20 +267,20 @@ export default function BillChat({ billAnalysis, initialMessage }: BillChatProps
       )}
 
       {/* Input */}
-      <form onSubmit={handleSubmit} className="p-4 border-t border-[#E5E7EB]">
+      <form onSubmit={handleSubmit} className="flex-shrink-0 p-3 border-t border-[#E5E7EB] bg-[#F9FAFB]">
         <div className="flex gap-2">
           <input
-            ref={inputRef}
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask a question about your bill..."
-            className="flex-1 px-4 py-2.5 bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl text-sm focus:outline-none focus:border-[#002125] transition-colors"
+            placeholder="Ask about your bill..."
+            className="flex-1 px-4 py-2.5 bg-white border border-[#E5E7EB] rounded-xl text-sm focus:outline-none focus:border-[#002125] focus:ring-1 focus:ring-[#002125] transition-colors"
             disabled={isLoading}
           />
           <button
             type="submit"
             disabled={!input.trim() || isLoading}
+            aria-label="Send message"
             className="px-4 py-2.5 bg-[#002125] text-white rounded-xl hover:bg-[#012E33] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <svg className="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -474,7 +474,7 @@ export async function searchChargesByDescription(
     .project({ score: { $meta: 'textScore' } })
     .sort({ score: { $meta: 'textScore' } })
     .limit(limit)
-    .toArray();
+    .toArray() as Promise<StandardChargeDocument[]>;
 }
 
 /**
@@ -520,7 +520,13 @@ export async function getPriceStatsByCode(
     };
   }
 
-  return result[0];
+  return result[0] as {
+    count: number;
+    avgGross: number | null;
+    minGross: number | null;
+    maxGross: number | null;
+    avgDiscounted: number | null;
+  };
 }
 
 /**

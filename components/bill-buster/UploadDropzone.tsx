@@ -81,10 +81,10 @@ export default function UploadDropzone({
   );
 
   return (
-    <div className="w-full max-w-xl mx-auto">
+    <div className="w-full">
       <label
         className={cn(
-          "relative flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-2xl cursor-pointer transition-all duration-200",
+          "relative flex flex-col items-center justify-center w-full py-6 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-200",
           isDragging
             ? "border-[#002125] bg-[#E9FAE7]"
             : "border-[#E5E7EB] bg-white hover:bg-[#F2FBEF] hover:border-[#002125]",
@@ -94,17 +94,17 @@ export default function UploadDropzone({
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
-        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+        <div className="flex flex-col items-center justify-center">
           {isUploading ? (
             <>
-              <div className="size-12 border-3 border-[#002125] border-t-transparent rounded-full animate-spin mb-4" />
-              <p className="text-lg font-medium text-[#17270C]">Uploading...</p>
+              <div className="size-10 border-3 border-[#002125] border-t-transparent rounded-full animate-spin mb-3" />
+              <p className="text-base font-medium text-[#17270C]">Uploading...</p>
             </>
           ) : (
             <>
-              <div className="size-16 bg-[#F2FBEF] rounded-2xl flex items-center justify-center mb-4">
+              <div className="size-12 bg-[#F2FBEF] rounded-xl flex items-center justify-center mb-3">
                 <svg
-                  className="size-8 text-[#002125]"
+                  className="size-6 text-[#002125]"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -117,12 +117,11 @@ export default function UploadDropzone({
                   />
                 </svg>
               </div>
-              <p className="text-lg font-medium text-[#17270C] mb-1">
+              <p className="text-base font-medium text-[#17270C]">
                 Drag and drop your bill here
               </p>
-              <p className="text-sm text-[#6B7280] mb-3">or click to browse</p>
-              <p className="text-xs text-[#6B7280]">
-                PDF, PNG, or JPG (max {MAX_FILE_SIZE_MB}MB)
+              <p className="text-sm text-[#6B7280]">
+                or click to browse · PDF, PNG, JPG
               </p>
             </>
           )}
@@ -137,15 +136,10 @@ export default function UploadDropzone({
       </label>
 
       {error && (
-        <div className="mt-4 p-4 bg-[#FEF2F2] border border-[#FECACA] rounded-xl">
+        <div className="mt-3 p-3 bg-[#FEF2F2] border border-[#FECACA] rounded-xl">
           <p className="text-sm text-[#DC2626] text-center">{error}</p>
         </div>
       )}
-
-      <p className="mt-4 text-sm text-[#6B7280] text-center">
-        Itemized bills work best. Don&apos;t have one? We&apos;ll do what we can with what
-        you&apos;ve got.
-      </p>
     </div>
   );
 }

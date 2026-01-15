@@ -1,13 +1,12 @@
-import { createOpenAI } from "@ai-sdk/openai";
+import { createFireworks } from "@ai-sdk/fireworks";
 import { streamText } from "ai";
 import { buildChatSystemPrompt } from "@/lib/bill-analysis";
 import type { BillAnalysis } from "@/lib/types/bill-analysis";
 
 export const maxDuration = 30;
 
-const fireworks = createOpenAI({
+const fireworks = createFireworks({
   apiKey: process.env.FIREWORKS_API_KEY,
-  baseURL: "https://api.fireworks.ai/inference/v1",
 });
 
 export async function POST(req: Request) {

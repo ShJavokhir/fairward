@@ -69,15 +69,7 @@ export interface BoundingBox {
   page: number; // 0-indexed page number
 }
 
-// API request/response types
-
-export interface AnalyzeRequest {
-  file: File;
-  insurance?: {
-    payerName: string;
-    planType: string;
-  } | null;
-}
+// API response types
 
 export interface AnalyzeResponse {
   success: boolean;
@@ -91,38 +83,9 @@ export interface AnalyzeResponse {
   };
 }
 
-export interface ChatRequest {
-  messages: ChatMessage[];
-  billAnalysis: BillAnalysis;
-}
-
-export interface ChatMessage {
-  role: "user" | "assistant";
-  content: string;
-}
-
-export interface GenerateCaseRequest {
-  analysis: BillAnalysis;
-  patientName?: string;
-}
-
 export interface GenerateCaseResponse {
   success: boolean;
-  document: string; // markdown
-}
-
-// Internal processing types
-
-export interface OCRResult {
-  text: string;
-  pages: PageOCRData[];
-}
-
-export interface PageOCRData {
-  pageNumber: number;
-  text: string;
-  width: number;
-  height: number;
+  document: string;
 }
 
 export interface ParsedBill {
@@ -132,16 +95,6 @@ export interface ParsedBill {
   lineItems: Omit<LineItem, "benchmarkAmount" | "benchmarkSource" | "variance" | "flag">[];
   totalBilled: number;
   isItemized: boolean;
-}
-
-export interface BenchmarkResult {
-  code: string;
-  description: string;
-  lowPrice: number;
-  highPrice: number;
-  medianPrice: number;
-  source: string;
-  region: string;
 }
 
 // Progress tracking for UI
@@ -154,12 +107,6 @@ export type AnalysisStage =
   | "benchmarking"
   | "complete"
   | "error";
-
-export interface AnalysisProgress {
-  stage: AnalysisStage;
-  percent: number;
-  message: string;
-}
 
 export const ANALYSIS_STAGES: Record<AnalysisStage, { percent: number; message: string }> = {
   uploading: { percent: 10, message: "Uploading your bill..." },
@@ -179,22 +126,10 @@ export const MAX_PAGES = 10;
 export const ACCEPTED_FILE_TYPES = ["application/pdf", "image/png", "image/jpeg", "image/jpg"];
 export const ACCEPTED_EXTENSIONS = [".pdf", ".png", ".jpg", ".jpeg"];
 
-// Issue type display info
-
-export const ISSUE_TYPE_INFO: Record<IssueType, { label: string; icon: string }> = {
-  duplicate: { label: "Duplicate Charge", icon: "copy" },
-  unbundling: { label: "Unbundling", icon: "ungroup" },
-  upcoding: { label: "Upcoding", icon: "trending-up" },
-  inflated: { label: "Inflated Price", icon: "dollar-sign" },
-  missed_discount: { label: "Missed Discount", icon: "percent" },
-};
-
-// General negotiation tips (shown when no issues found or always)
-
+// General negotiation tips (shown when no issues found)
 export const GENERAL_TIPS = [
   "Request an itemized bill if you don't have one - you have a right to see exactly what you're being charged for.",
   "Ask about uninsured/self-pay discounts - many hospitals offer 20-40% off for cash payments.",
   "Inquire about financial assistance programs - most non-profit hospitals are required to offer charity care.",
   "Request a payment plan to spread costs over time - this is usually interest-free.",
-  "Compare prices with other providers in your area using our Price Search tool.",
 ];

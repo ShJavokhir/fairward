@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bun run build:*)",
+      "Bash(npx tsc:*)",
+      "Bash(bun remove:*)",
+      "Bash(ls:*)",
+      "Bash(bun run:*)",
+      "Bash(npm info:*)",
+      "Bash(bun pm:*)"
+    ]
+  }
+}

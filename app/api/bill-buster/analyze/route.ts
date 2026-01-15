@@ -4,13 +4,12 @@ import {
   parseBillStructure,
   benchmarkPrices,
   detectIssues,
-  buildInitialChatMessage,
 } from "@/lib/bill-analysis";
 import type { BillAnalysis, AnalyzeResponse } from "@/lib/types/bill-analysis";
 import {
   MAX_FILE_SIZE_BYTES,
-  MAX_PAGES,
   ACCEPTED_FILE_TYPES,
+  GENERAL_TIPS,
 } from "@/lib/types/bill-analysis";
 
 export const maxDuration = 60; // Allow up to 60s for full analysis
@@ -28,7 +27,6 @@ export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
-    const insuranceRaw = formData.get("insurance") as string | null;
 
     // Validate file
     if (!file) {
@@ -56,16 +54,6 @@ export async function POST(req: NextRequest) {
         },
         { status: 400 }
       );
-    }
-
-    // Parse insurance if provided
-    let insurance = null;
-    if (insuranceRaw) {
-      try {
-        insurance = JSON.parse(insuranceRaw);
-      } catch {
-        // Ignore invalid JSON
-      }
     }
 
     // Convert file to base64
@@ -139,7 +127,7 @@ export async function POST(req: NextRequest) {
 
     // Step 4: Detect issues
     const issuesStart = performance.now();
-    let issues;
+    let issues: Awaited<ReturnType<typeof detectIssues>> = [];
     try {
       issues = await detectIssues(lineItemsWithBenchmarks, rawText);
     } catch (error) {
@@ -175,12 +163,7 @@ export async function POST(req: NextRequest) {
       },
       lineItems: lineItemsWithBenchmarks,
       issues,
-      generalTips: [
-        "Request an itemized bill if you don't have one - you have a right to see exactly what you're being charged for.",
-        "Ask about uninsured/self-pay discounts - many hospitals offer 20-40% off for cash payments.",
-        "Inquire about financial assistance programs - most non-profit hospitals are required to offer charity care.",
-        "Request a payment plan to spread costs over time - this is usually interest-free.",
-      ],
+      generalTips: GENERAL_TIPS,
       rawText,
     };
 

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import type { Issue, IssueType } from "@/lib/types/bill-analysis";
-import { ISSUE_TYPE_INFO, GENERAL_TIPS } from "@/lib/types/bill-analysis";
+import { GENERAL_TIPS } from "@/lib/types/bill-analysis";
 
 interface IssuesPanelProps {
   issues: Issue[];

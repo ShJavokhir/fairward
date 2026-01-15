@@ -25,7 +25,7 @@ export default function SummaryBar({
       : `$${potentialSavings.min.toLocaleString()} - $${potentialSavings.max.toLocaleString()}`;
 
   return (
-    <div className="sticky bottom-0 left-0 right-0 bg-white border-t border-[#E5E7EB] px-6 py-4 shadow-lg">
+    <div className="flex-shrink-0 bg-white border-t border-[#E5E7EB] px-6 py-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
       <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex flex-wrap items-center justify-center sm:justify-start gap-6 text-sm">
           <div className="flex items-center gap-2">

@@ -2,22 +2,38 @@
  * Bill Buster - Core analysis functions
  */
 
-import { createOpenAI } from "@ai-sdk/openai";
-import { generateText, generateObject } from "ai";
+import { createFireworks } from "@ai-sdk/fireworks";
+import { generateText } from "ai";
 import { z } from "zod";
 import type {
   BillAnalysis,
   LineItem,
   Issue,
   ParsedBill,
-  BoundingBox,
-  IssueType,
-  GENERAL_TIPS,
 } from "./types/bill-analysis";
+import { MAX_PAGES } from "./types/bill-analysis";
 
-const fireworks = createOpenAI({
+/**
+ * Extract JSON from text that may contain markdown code blocks or extra text
+ */
+function extractJSON(text: string): string {
+  // Try to find JSON in markdown code blocks first
+  const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (codeBlockMatch) {
+    return codeBlockMatch[1].trim();
+  }
+
+  // Try to find JSON object directly
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (jsonMatch) {
+    return jsonMatch[0];
+  }
+
+  return text.trim();
+}
+
+const fireworks = createFireworks({
   apiKey: process.env.FIREWORKS_API_KEY,
-  baseURL: "https://api.fireworks.ai/inference/v1",
 });
 
 // Vision model for OCR
@@ -26,11 +42,67 @@ const VISION_MODEL = "accounts/fireworks/models/qwen3-vl-235b-a22b-instruct";
 const TEXT_MODEL = "accounts/fireworks/models/deepseek-v3p1";
 
 /**
- * Extract text from a bill image/PDF using vision model
+ * Convert PDF buffer to array of page images (PNG base64) using pdftoppm (poppler-utils)
+ * This approach uses native PDF rendering for best quality and compatibility
  */
-export async function extractTextFromImage(
+async function convertPdfToImages(pdfBuffer: Buffer): Promise<string[]> {
+  const { execSync } = await import("child_process");
+  const fs = await import("fs");
+  const path = await import("path");
+  const os = await import("os");
+
+  const images: string[] = [];
+
+  // Create temp directory for PDF and images
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "pdf-"));
+  const pdfPath = path.join(tempDir, "input.pdf");
+  const outputPrefix = path.join(tempDir, "page");
+
+  try {
+    // Write PDF to temp file
+    fs.writeFileSync(pdfPath, pdfBuffer);
+
+    // Convert PDF to PNG images using pdftoppm
+    // -png: output PNG format
+    // -r 200: 200 DPI for good OCR quality
+    // -l MAX_PAGES: limit to first N pages
+    execSync(`pdftoppm -png -r 200 -l ${MAX_PAGES} "${pdfPath}" "${outputPrefix}"`, {
+      timeout: 60000, // 60 second timeout
+    });
+
+    // Read generated images
+    const files = fs.readdirSync(tempDir)
+      .filter((f: string) => f.startsWith("page") && f.endsWith(".png"))
+      .sort();
+
+    for (const file of files) {
+      const imagePath = path.join(tempDir, file);
+      const imageBuffer = fs.readFileSync(imagePath);
+      images.push(imageBuffer.toString("base64"));
+    }
+
+  } finally {
+    // Clean up temp directory
+    try {
+      const files = fs.readdirSync(tempDir);
+      for (const file of files) {
+        fs.unlinkSync(path.join(tempDir, file));
+      }
+      fs.rmdirSync(tempDir);
+    } catch {
+      // Ignore cleanup errors
+    }
+  }
+
+  return images;
+}
+
+/**
+ * Extract text from a single image using vision model
+ */
+async function extractTextFromSingleImage(
   base64Image: string,
-  mimeType: string
+  mimeType: string = "image/png"
 ): Promise<string> {
   const result = await generateText({
     model: fireworks(VISION_MODEL),
@@ -63,50 +135,99 @@ Output the text exactly as it appears, maintaining the tabular structure for lin
 }
 
 /**
+ * Extract text from a bill image or PDF using vision model
+ * For PDFs, converts each page to an image first
+ */
+export async function extractTextFromImage(
+  base64Data: string,
+  mimeType: string
+): Promise<string> {
+  // If it's a PDF, convert to images first
+  if (mimeType === "application/pdf") {
+    const pdfBuffer = Buffer.from(base64Data, "base64");
+    const pageImages = await convertPdfToImages(pdfBuffer);
+
+    if (pageImages.length === 0) {
+      throw new Error("Could not extract any pages from PDF");
+    }
+
+    // Extract text from each page and combine
+    const pageTexts: string[] = [];
+    for (let i = 0; i < pageImages.length; i++) {
+      const pageText = await extractTextFromSingleImage(pageImages[i], "image/png");
+      pageTexts.push(`--- Page ${i + 1} ---\n${pageText}`);
+    }
+
+    return pageTexts.join("\n\n");
+  }
+
+  // For images, process directly
+  return extractTextFromSingleImage(base64Data, mimeType);
+}
+
+/**
  * Parse extracted text into structured bill data
  */
 export async function parseBillStructure(rawText: string): Promise<ParsedBill> {
   const schema = z.object({
     provider: z.object({
-      name: z.string().nullable(),
-      address: z.string().nullable(),
-      billingContact: z.string().nullable(),
+      name: z.string().nullable().default(null),
+      address: z.string().nullable().default(null),
+      billingContact: z.string().nullable().default(null),
     }),
-    dateOfService: z.string().nullable(),
-    accountNumber: z.string().nullable(),
+    dateOfService: z.string().nullable().default(null),
+    accountNumber: z.string().nullable().default(null),
     lineItems: z.array(
       z.object({
         id: z.string(),
         description: z.string(),
-        code: z.string().nullable(),
-        codeConfidence: z.enum(["high", "medium", "low"]),
-        quantity: z.number(),
+        code: z.string().nullable().default(null),
+        codeConfidence: z.enum(["high", "medium", "low"]).default("low"),
+        quantity: z.number().default(1),
         billedAmount: z.number(),
       })
-    ),
-    totalBilled: z.number(),
-    isItemized: z.boolean(),
+    ).default([]),
+    totalBilled: z.number().default(0),
+    isItemized: z.boolean().default(false),
   });
 
-  const result = await generateObject({
-    model: fireworks(TEXT_MODEL),
-    schema,
-    prompt: `Parse this medical bill text into structured data. Extract all information available.
+  try {
+    const result = await generateText({
+      model: fireworks(TEXT_MODEL),
+      prompt: `Parse this medical bill text into structured JSON data. Extract all information available.
+
+You MUST respond with ONLY valid JSON (no markdown, no explanation) matching this exact structure:
+{
+  "provider": { "name": string|null, "address": string|null, "billingContact": string|null },
+  "dateOfService": string|null,
+  "accountNumber": string|null,
+  "lineItems": [{ "id": string, "description": string, "code": string|null, "codeConfidence": "high"|"medium"|"low", "quantity": number, "billedAmount": number }],
+  "totalBilled": number,
+  "isItemized": boolean
+}
 
 For each line item:
 - Generate a unique ID (e.g., "item_1", "item_2")
 - Extract the description
 - Extract CPT/HCPCS code if present (set codeConfidence to "high" if clearly visible, "medium" if partially visible, "low" if inferred)
 - Extract quantity (default to 1 if not specified)
-- Extract the billed amount as a number
+- Extract the billed amount as a number (remove $ and commas)
 
 Determine if this is an itemized bill (has individual line items) or a summary bill (just totals).
 
 BILL TEXT:
-${rawText}`,
-  });
+${rawText}
 
-  return result.object as ParsedBill;
+Respond with ONLY the JSON object, no other text.`,
+    });
+
+    const jsonStr = extractJSON(result.text);
+    const parsed = JSON.parse(jsonStr);
+    return schema.parse(parsed) as ParsedBill;
+  } catch (error) {
+    console.error("parseBillStructure error:", error);
+    throw error;
+  }
 }
 
 /**
@@ -116,26 +237,36 @@ export async function benchmarkPrices(
   lineItems: ParsedBill["lineItems"],
   region: string = "San Francisco Bay Area"
 ): Promise<LineItem[]> {
+  // If no line items, return empty array
+  if (!lineItems || lineItems.length === 0) {
+    return [];
+  }
+
   const schema = z.object({
     items: z.array(
       z.object({
         id: z.string(),
-        benchmarkAmount: z.number().nullable(),
-        benchmarkSource: z.string().nullable(),
-        variance: z.number().nullable(),
-        flag: z.enum(["fair", "high", "error"]).nullable(),
+        benchmarkAmount: z.number().nullable().default(null),
+        benchmarkSource: z.string().nullable().default(null),
+        variance: z.number().nullable().default(null),
+        flag: z.enum(["fair", "high", "error"]).nullable().default(null),
       })
-    ),
+    ).default([]),
   });
 
   const itemDescriptions = lineItems
     .map((item) => `- ${item.id}: "${item.description}" (code: ${item.code || "unknown"}) - $${item.billedAmount}`)
     .join("\n");
 
-  const result = await generateObject({
-    model: fireworks(TEXT_MODEL),
-    schema,
-    prompt: `For each medical service below, estimate the fair market price in ${region} based on your knowledge of typical healthcare costs.
+  try {
+    const result = await generateText({
+      model: fireworks(TEXT_MODEL),
+      prompt: `For each medical service below, estimate the fair market price in ${region} based on your knowledge of typical healthcare costs.
+
+You MUST respond with ONLY valid JSON (no markdown, no explanation) matching this exact structure:
+{
+  "items": [{ "id": string, "benchmarkAmount": number|null, "benchmarkSource": string|null, "variance": number|null, "flag": "fair"|"high"|"error"|null }]
+}
 
 LINE ITEMS:
 ${itemDescriptions}
@@ -152,20 +283,37 @@ Be conservative - only flag as "high" if clearly inflated. Common fair price ran
 - CT scan: $300-800
 - X-ray: $100-300
 - Emergency room visit: $500-2000
-- Hospital room per day: $1500-3000`,
-  });
+- Hospital room per day: $1500-3000
 
-  // Merge benchmark data with original items
-  return lineItems.map((item) => {
-    const benchmark = result.object.items.find((b) => b.id === item.id);
-    return {
+Respond with ONLY the JSON object, no other text.`,
+    });
+
+    const jsonStr = extractJSON(result.text);
+    const parsed = JSON.parse(jsonStr);
+    const validated = schema.parse(parsed);
+
+    // Merge benchmark data with original items
+    return lineItems.map((item) => {
+      const benchmark = validated.items.find((b) => b.id === item.id);
+      return {
+        ...item,
+        benchmarkAmount: benchmark?.benchmarkAmount ?? null,
+        benchmarkSource: benchmark?.benchmarkSource ?? null,
+        variance: benchmark?.variance ?? null,
+        flag: benchmark?.flag ?? null,
+      };
+    });
+  } catch (error) {
+    console.error("benchmarkPrices error:", error);
+    // Return items without benchmarks on error
+    return lineItems.map((item) => ({
       ...item,
-      benchmarkAmount: benchmark?.benchmarkAmount ?? null,
-      benchmarkSource: benchmark?.benchmarkSource ?? null,
-      variance: benchmark?.variance ?? null,
-      flag: benchmark?.flag ?? null,
-    };
-  });
+      benchmarkAmount: null,
+      benchmarkSource: null,
+      variance: null,
+      flag: null,
+    }));
+  }
 }
 
 /**
@@ -175,6 +323,11 @@ export async function detectIssues(
   lineItems: LineItem[],
   rawText: string
 ): Promise<Issue[]> {
+  // If no line items, return empty array
+  if (!lineItems || lineItems.length === 0) {
+    return [];
+  }
+
   const schema = z.object({
     issues: z.array(
       z.object({
@@ -184,11 +337,11 @@ export async function detectIssues(
         shortDescription: z.string(),
         fullExplanation: z.string(),
         disputeLanguage: z.string(),
-        affectedLineItems: z.array(z.string()),
-        estimatedSavings: z.number(),
-        pageHint: z.number(),
+        affectedLineItems: z.array(z.string()).default([]),
+        estimatedSavings: z.number().default(0),
+        pageHint: z.number().default(0),
       })
-    ),
+    ).default([]),
   });
 
   const itemList = lineItems
@@ -198,11 +351,19 @@ export async function detectIssues(
     )
     .join("\n");
 
-  const result = await generateObject({
-    model: fireworks(TEXT_MODEL),
-    schema,
-    prompt: `Analyze this medical bill for errors and overcharges. Look for:
+  try {
+    const result = await generateText({
+      model: fireworks(TEXT_MODEL),
+      prompt: `Analyze this medical bill for errors and overcharges.
 
+You MUST respond with ONLY valid JSON (no markdown, no explanation) matching this exact structure:
+{
+  "issues": [{ "id": string, "type": "duplicate"|"unbundling"|"upcoding"|"inflated"|"missed_discount", "title": string, "shortDescription": string, "fullExplanation": string, "disputeLanguage": string, "affectedLineItems": string[], "estimatedSavings": number, "pageHint": number }]
+}
+
+If no issues are found, return: { "issues": [] }
+
+Look for these issue types:
 1. DUPLICATE CHARGES: Same service billed multiple times for single service
 2. UNBUNDLING: Panel tests (like Comprehensive Metabolic Panel) billed as individual tests instead of bundled
 3. UPCODING: Higher-level code used when lower-level appropriate (e.g., complex visit code for simple visit)
@@ -226,22 +387,32 @@ For each issue found:
 - Estimate savings if corrected
 - Set pageHint to 0 (first page) - we'll refine positioning later
 
-Be conservative - only flag clear issues. Don't flag if uncertain.`,
-  });
+Be conservative - only flag clear issues. Don't flag if uncertain.
 
-  // Add bounding boxes (simplified - center of page for now)
-  return result.object.issues.map((issue) => ({
-    ...issue,
-    annotation: {
-      boundingBox: {
-        x: 10,
-        y: 20 + Math.random() * 60, // Spread vertically
-        width: 80,
-        height: 8,
-        page: issue.pageHint,
+Respond with ONLY the JSON object, no other text.`,
+    });
+
+    const jsonStr = extractJSON(result.text);
+    const parsed = JSON.parse(jsonStr);
+    const validated = schema.parse(parsed);
+
+    // Add bounding boxes (simplified - center of page for now)
+    return (validated.issues || []).map((issue) => ({
+      ...issue,
+      annotation: {
+        boundingBox: {
+          x: 10,
+          y: 20 + Math.random() * 60, // Spread vertically
+          width: 80,
+          height: 8,
+          page: issue.pageHint,
+        },
       },
-    },
-  }));
+    }));
+  } catch (error) {
+    console.error("detectIssues error:", error);
+    return [];
+  }
 }
 
 /**
@@ -341,37 +512,6 @@ Sincerely,
 
 *This document was generated by JustPrice Bill Buster. For more information, visit justprice.com*
 `;
-}
-
-/**
- * Build initial chat message summarizing the analysis
- */
-export function buildInitialChatMessage(analysis: BillAnalysis): string {
-  const issueCount = analysis.issues.length;
-  const savingsMax = analysis.totals.potentialSavings.max;
-
-  if (issueCount === 0) {
-    return `I've reviewed your bill and didn't find any obvious errors or overcharges. Your total bill is $${analysis.totals.billed.toLocaleString()}.
-
-That said, there are still ways you might be able to reduce your costs:
-
-1. **Request an itemized bill** if this is a summary - you have a right to see every charge
-2. **Ask about self-pay discounts** - many hospitals offer 20-40% off
-3. **Inquire about financial assistance** - most hospitals have charity care programs
-4. **Request a payment plan** - usually interest-free
-
-Would you like help with any of these, or do you have questions about specific charges?`;
-  }
-
-  const biggestIssue = analysis.issues.reduce((max, issue) =>
-    issue.estimatedSavings > max.estimatedSavings ? issue : max
-  );
-
-  return `I found **${issueCount} potential issue${issueCount > 1 ? "s"  : ""}** with your bill totaling up to **$${savingsMax.toLocaleString()}** in possible savings.
-
-The biggest issue is a **${biggestIssue.title.toLowerCase()}** that could save you $${biggestIssue.estimatedSavings.toLocaleString()}: ${biggestIssue.shortDescription}
-
-Click any issue in the panel above to learn more, or ask me a question about your bill.`;
 }
 
 /**

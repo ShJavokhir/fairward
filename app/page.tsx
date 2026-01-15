@@ -620,7 +620,16 @@ export default function Home() {
                 isScrolled ? "text-white/70 hover:text-white" : "text-[#6B7280] hover:text-[#17270C]"
               )}
             >
-              Search Prices
+              Price Search
+            </Link>
+            <Link
+              href="/bill-buster"
+              className={cn(
+                "text-sm transition-colors font-medium no-underline",
+                isScrolled ? "text-white/70 hover:text-white" : "text-[#6B7280] hover:text-[#17270C]"
+              )}
+            >
+              Lower My Bill
             </Link>
             <a
               href="#approach"
